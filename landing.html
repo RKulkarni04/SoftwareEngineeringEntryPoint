@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Optional: add custom styles if needed (but Tailwind covers most) -->
+</head>
+<body class="flex flex-col min-h-screen m-0">
+
+    <!-- Top bar -->
+    <header class="flex items-center justify-center gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
+        <a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
+        
+        <!-- Auth area -->
+        <div class="relative inline-block ml-auto">
+            <button class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition" id="loginBtn">Login</button>
+
+            <!-- Dropdown menu -->
+            <div class="absolute right-0 z-10 hidden w-64 p-4 bg-white rounded shadow-lg" id="loginDropdown">
+                <form action="login.html" method="POST" class="flex flex-col gap-3">
+                    <label for="username" class="font-bold">Username or Email:</label>
+                    <input type="text" id="username" name="username" required
+                           class="px-2 py-1 border border-gray-300 rounded">
+
+                    <label for="password" class="font-bold">Password:</label>
+                    <input type="password" id="password" name="password" required
+                           class="px-2 py-1 border border-gray-300 rounded">
+
+                    <!-- Sign Up link (navigates to another page) -->
+                    <a href="signup.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Sign Up</a>
+
+                    <button type="submit" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-700 transition">Log In</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content (centered) -->
+    <main class="flex-1 flex flex-col justify-center items-center p-5">
+        <h1 class="text-3xl font-bold mb-5">Welcome to (Name)</h1>
+
+        <form class="flex justify-center gap-2 flex-wrap mt-5">
+            <input type="text" placeholder="Your question here" required
+                   class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+            <button type="submit" class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition">Send →</button>
+        </form>
+    </main>
+
+    <script>
+        // Javascript
+        const loginBtn = document.getElementById('loginBtn');
+        const loginDropdown = document.getElementById('loginDropdown');
+
+        loginBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            loginDropdown.classList.toggle('hidden');
+        });
+
+        window.addEventListener('click', function() {
+            if (!loginDropdown.classList.contains('hidden')) {
+                loginDropdown.classList.add('hidden');
+            }
+        });
+
+        loginDropdown.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    </script>
+</body>
+</html>

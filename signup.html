@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Optional: add custom styles if needed (but Tailwind covers most) -->
+</head>
+<body class="flex flex-col min-h-screen m-0">
+    <title>LOGIN PAGE</title>
+    <!-- Top bar -->
+    <header class="flex items-center justify-left gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
+        <a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
+        
+    </header>
+
+    <!-- Main content (centered) -->
+    <main class="flex-1 flex flex-col justify-center items-center p-5">
+        <h1 class="text-3xl font-bold mb-5">Create an Account</h1>
+
+        <form class="flex flex-col justify-center gap-2 flex-wrap mt-5">
+            <input type="text" placeholder="Username or Email" required
+                class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+            <input type="text" placeholder="Password" required
+                class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+            <button type="submit" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-700 transition">Create Account</button>
+        </form>
+    </main>
+
+    <script>
+        // Javascript
+        
+    </script>
+</body>
+</html>
