@@ -26,5 +26,9 @@
   "bugs": {
     "url": "https://github.com/RKulkarni04/SoftwareEngineeringEntryPoint/issues"
   },
-  "homepage": "https://github.com/RKulkarni04/SoftwareEngineeringEntryPoint#readme"
+  "homepage": "https://github.com/RKulkarni04/SoftwareEngineeringEntryPoint#readme",
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.7.0",
+    "puppeteer": "^24.39.1"
+  }
 }
