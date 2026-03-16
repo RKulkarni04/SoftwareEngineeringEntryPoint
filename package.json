@@ -29,6 +29,7 @@
   "homepage": "https://github.com/RKulkarni04/SoftwareEngineeringEntryPoint#readme",
   "devDependencies": {
     "@cucumber/cucumber": "^12.7.0",
+    "jasmine": "^6.1.0",
     "puppeteer": "^24.39.1"
   }
 }
