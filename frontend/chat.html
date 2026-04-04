@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - EntryPoint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col min-h-screen m-0">
+
+    <!-- Top bar -->
+    <header class="flex items-center gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
+        <a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
+        <a href="chat.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">New Chat</a>
+        <button id="logoutBtn" onclick="logout()" class="ml-auto px-5 py-2 text-base text-white bg-red-500 rounded hover:bg-red-700 transition">Logout</button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar: chat history -->
+        <aside class="w-48 bg-gray-50 border-r border-gray-300 p-3 flex flex-col gap-2">
+            <h2 class="font-semibold text-sm text-gray-600">Previous Chats</h2>
+            <div id="chatSidebar" class="flex flex-col gap-1">
+                <div class="px-3 py-2 bg-green-100 rounded cursor-pointer text-sm">Current Chat</div>
+            </div>
+        </aside>
+
+        <!-- Main chat area -->
+        <main class="flex-1 flex flex-col">
+
+            <!-- Messages -->
+            <div id="messages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+                <div class="text-gray-400 text-sm text-center">Start a conversation below</div>
+            </div>
+
+            <!-- Input box -->
+            <div class="flex gap-2 p-4 border-t border-gray-300 bg-white">
+                <input type="text" id="chatInput" placeholder="Type a message..."
+                       class="flex-1 px-4 py-2 text-base border border-gray-300 rounded"
+                       onkeydown="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition">Send →</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load first message from landing page if exists
+        window.onload = function() {
+            const firstMessage = localStorage.getItem('firstMessage');
+            if (firstMessage) {
+                localStorage.removeItem('firstMessage');
+                sendMessage(firstMessage);
+            }
+        };
+
+        function addMessage(text, isUser) {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = isUser
+                ? 'self-end bg-green-500 text-white px-4 py-2 rounded-lg max-w-xs'
+                : 'self-start bg-gray-200 text-gray-800 px-4 py-2 rounded-lg max-w-xs';
+            div.textContent = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        async function sendMessage(overrideText) {
+            const input = document.getElementById('chatInput');
+            const text = overrideText || input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            addMessage(text, true);
+
+            // Show typing indicator
+            addMessage('...', false);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+
+                addMessage(data.reply || 'No response', false);
+
+            } catch (err) {
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+                addMessage('Error connecting to server.', false);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            window.location.href = 'landing.html';
+        }
+    </script>
+</body>
+</html>

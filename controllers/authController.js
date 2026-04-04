@@ -1,3 +1,4 @@
+const ollama = require("ollama");
 const db = require("../database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -128,4 +129,22 @@ exports.getActivity = (req, res) => {
 
         }
     );
+};
+
+// CHAT MESSAGE
+exports.chatMessage = async (req, res) => {
+    const { message } = req.body;
+
+    try {
+        const response = await ollama.chat({
+            model: "llama3",
+            messages: [{ role: "user", content: message }]
+        });
+
+        res.json({ reply: response.message.content });
+
+    } catch (err) {
+        console.error("Ollama error:", err);
+        res.status(500).json({ reply: "AI model error. Make sure Ollama is running." });
+    }
 };
