@@ -3,54 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CDN -->
+    <title>EntryPoint</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Optional: add custom styles if needed (but Tailwind covers most) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .logo-text { letter-spacing: -0.5px; }
+    </style>
 </head>
-<body class="flex flex-col min-h-screen m-0">
+<body class="flex flex-col min-h-screen bg-white text-gray-800">
 
-    <!-- Top bar -->
-    <header class="flex items-center justify-center gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
-        <a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
-        
+    <!-- Navbar -->
+    <header class="flex items-center px-8 py-4 border-b border-gray-100 shadow-sm bg-white">
+        <!-- Logo -->
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-sm">EP</span>
+            </div>
+            <span class="text-xl font-bold logo-text text-gray-900">EntryPoint</span>
+        </div>
+
+        <!-- Nav links -->
+        <nav class="flex items-center gap-6 ml-10">
+            <a href="landing.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Home</a>
+            <a href="chat.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Chat</a>
+        </nav>
+
         <!-- Auth area -->
-        <div class="relative inline-block ml-auto">
-            <button class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition" id="loginBtn">Login</button>
+        <div class="relative ml-auto flex items-center gap-3">
+            <span id="welcomeText" class="hidden text-sm text-gray-500"></span>
+            <button id="loginBtn" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition shadow-sm">
+                Login
+            </button>
+            <button id="logoutBtn" class="hidden px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition shadow-sm">
+                Logout
+            </button>
 
-            <!-- Dropdown menu -->
-            <div class="absolute right-0 z-10 hidden w-64 p-4 bg-white rounded shadow-lg" id="loginDropdown">
-                <form action="/login" method="POST" class="flex flex-col gap-3">
-                    <label for="username" class="font-bold">Username or Email:</label>
-                    <input type="text" id="username" name="username" required
-                           class="px-2 py-1 border border-gray-300 rounded">
-                    <label for="password" class="font-bold">Password:</label>
-                    <input type="password" id="password" name="password" required
-                           class="px-2 py-1 border border-gray-300 rounded">
-
-                    <!-- Sign Up link (navigates to another page) -->
-                    <a href="signup.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Sign Up</a>
-
-                    <button type="submit" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-700 transition">Log In</button>
-                </form>
+            <!-- Login Dropdown -->
+            <div class="absolute right-0 top-12 z-10 hidden w-72 p-5 bg-white rounded-xl shadow-xl border border-gray-100" id="loginDropdown">
+                <h3 class="text-base font-semibold mb-4 text-gray-800">Welcome back</h3>
+                <div id="errorMsg" class="hidden text-red-500 text-xs mb-3 bg-red-50 px-3 py-2 rounded-lg"></div>
+                <div class="flex flex-col gap-3">
+                    <input type="email" id="email" placeholder="Email address"
+                           class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <input type="password" id="password" placeholder="Password"
+                           class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <button onclick="loginUser()" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
+                        Log In
+                    </button>
+                    <div class="flex items-center gap-2 my-1">
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                        <span class="text-xs text-gray-400">or</span>
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                    </div>
+                    <a href="signup.html" class="px-4 py-2 text-sm font-medium text-center text-green-600 border border-green-500 rounded-lg hover:bg-green-50 transition">
+                        Create an account
+                    </a>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main content (centered) -->
-    <main class="flex-1 flex flex-col justify-center items-center p-5">
-        <h1 class="text-3xl font-bold mb-5">Welcome to (Name)</h1>
+    <!-- Hero Section -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-b from-white to-green-50">
 
-        <form action="/send" method="POST" class="flex justify-center gap-2 flex-wrap mt-5">
-            <input type="text" placeholder="Your question here" required
-                   class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
-            <button type="submit" class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition">Send →</button>
-        </form>
+        <!-- Badge -->
+        <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full mb-6">
+            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+            AI-Powered Learning Assistant
+        </div>
+
+        <!-- Heading -->
+        <h1 class="text-5xl font-bold text-center text-gray-900 mb-4 leading-tight">
+            Your Intelligent <br>
+            <span class="text-green-500">Entry Point</span>
+        </h1>
+        <p class="text-gray-500 text-center text-base max-w-md mb-10">
+            Ask anything, learn faster. EntryPoint connects you with AI to help you study smarter.
+        </p>
+
+        <!-- Chat input -->
+        <div class="flex items-center gap-2 w-full max-w-lg bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3">
+            <input type="text" id="chatInput" placeholder="Ask a question to get started..."
+                   class="flex-1 text-sm text-gray-700 outline-none bg-transparent"
+                   onkeydown="if(event.key==='Enter') goToChat()">
+            <button onclick="goToChat()" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
+                Send →
+            </button>
+        </div>
+
+        <!-- Previous chats (shown when logged in) -->
+        <div id="chatHistory" class="hidden w-full max-w-lg mt-10">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Previous Chats</h2>
+            <ul id="chatList" class="bg-white border border-gray-100 rounded-xl divide-y divide-gray-100 shadow-sm">
+                <li class="px-4 py-3 text-sm text-gray-700 hover:bg-green-50 cursor-pointer flex items-center gap-2 transition"
+                    onclick="window.location.href='chat.html'">
+                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                    Chat Session 1
+                </li>
+            </ul>
+        </div>
+
+        <!-- Feature cards (shown when logged out) -->
+        <div id="featureCards" class="grid grid-cols-3 gap-4 mt-12 max-w-lg w-full">
+            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
+                <div class="text-2xl mb-2">🤖</div>
+                <p class="text-xs font-medium text-gray-700">AI Powered</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
+                <div class="text-2xl mb-2">⚡</div>
+                <p class="text-xs font-medium text-gray-700">Instant Answers</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
+                <div class="text-2xl mb-2">🔒</div>
+                <p class="text-xs font-medium text-gray-700">Secure Login</p>
+            </div>
+        </div>
+
     </main>
 
     <script>
         // Javascript
         const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
         const loginDropdown = document.getElementById('loginDropdown');
+
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                document.getElementById('chatHistory').classList.remove('hidden');
+                document.getElementById('featureCards').classList.add('hidden');
+            }
+        };
 
         loginBtn.addEventListener('click', function(event) {
             event.stopPropagation();
@@ -66,6 +152,55 @@
         loginDropdown.addEventListener('click', function(event) {
             event.stopPropagation();
         });
+
+        async function loginUser() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('userId', data.userId);
+                    loginBtn.classList.add('hidden');
+                    logoutBtn.classList.remove('hidden');
+                    loginDropdown.classList.add('hidden');
+                    document.getElementById('chatHistory').classList.remove('hidden');
+                    document.getElementById('featureCards').classList.add('hidden');
+                } else {
+                    errorMsg.classList.remove('hidden');
+                    errorMsg.textContent = data.error || 'Login failed';
+                }
+            } catch (err) {
+                errorMsg.classList.remove('hidden');
+                errorMsg.textContent = 'Server error. Please try again.';
+            }
+        }
+
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            loginBtn.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+            document.getElementById('chatHistory').classList.add('hidden');
+            document.getElementById('featureCards').classList.remove('hidden');
+        });
+
+        function goToChat() {
+            const msg = document.getElementById('chatInput').value;
+            if (msg.trim()) {
+                localStorage.setItem('firstMessage', msg);
+                window.location.href = 'chat.html';
+            }
+        }
     </script>
 </body>
 </html>
