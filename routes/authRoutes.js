@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -17,6 +16,6 @@ router.post("/login", loginUser);
 
 router.get("/progress/:id", authenticateToken, getProgress);
 router.get("/activity/:id", authenticateToken, getActivity);
-router.post("/chat", authenticateToken, chatMessage);
+router.post("/chat", chatMessage);
 
 module.exports = router;
