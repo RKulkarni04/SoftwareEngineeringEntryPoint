@@ -13,9 +13,7 @@
 </head>
 <body class="flex flex-col min-h-screen bg-white text-gray-800">
 
-    <!-- Navbar -->
     <header class="flex items-center px-8 py-4 border-b border-gray-100 shadow-sm bg-white">
-        <!-- Logo -->
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                 <span class="text-white font-bold text-sm">EP</span>
@@ -23,13 +21,11 @@
             <span class="text-xl font-bold logo-text text-gray-900">EntryPoint</span>
         </div>
 
-        <!-- Nav links -->
         <nav class="flex items-center gap-6 ml-10">
             <a href="landing.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Home</a>
             <a href="chat.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Chat</a>
         </nav>
 
-        <!-- Auth area -->
         <div class="relative ml-auto flex items-center gap-3">
             <span id="welcomeText" class="hidden text-sm text-gray-500"></span>
             <button id="loginBtn" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition shadow-sm">
@@ -39,7 +35,6 @@
                 Logout
             </button>
 
-            <!-- Login Dropdown -->
             <div class="absolute right-0 top-12 z-10 hidden w-72 p-5 bg-white rounded-xl shadow-xl border border-gray-100" id="loginDropdown">
                 <h3 class="text-base font-semibold mb-4 text-gray-800">Welcome back</h3>
                 <div id="errorMsg" class="hidden text-red-500 text-xs mb-3 bg-red-50 px-3 py-2 rounded-lg"></div>
@@ -64,16 +59,12 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
     <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-b from-white to-green-50">
-
-        <!-- Badge -->
         <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full mb-6">
             <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
             AI-Powered Learning Assistant
         </div>
 
-        <!-- Heading -->
         <h1 class="text-5xl font-bold text-center text-gray-900 mb-4 leading-tight">
             Your Intelligent <br>
             <span class="text-green-500">Entry Point</span>
@@ -82,7 +73,6 @@
             Ask anything, learn faster. EntryPoint connects you with AI to help you study smarter.
         </p>
 
-        <!-- Chat input -->
         <div class="flex items-center gap-2 w-full max-w-lg bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3">
             <input type="text" id="chatInput" placeholder="Ask a question to get started..."
                    class="flex-1 text-sm text-gray-700 outline-none bg-transparent"
@@ -92,7 +82,6 @@
             </button>
         </div>
 
-        <!-- Previous chats (shown when logged in) -->
         <div id="chatHistory" class="hidden w-full max-w-lg mt-10">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Previous Chats</h2>
             <ul id="chatList" class="bg-white border border-gray-100 rounded-xl divide-y divide-gray-100 shadow-sm">
@@ -104,7 +93,6 @@
             </ul>
         </div>
 
-        <!-- Feature cards (shown when logged out) -->
         <div id="featureCards" class="grid grid-cols-3 gap-4 mt-12 max-w-lg w-full">
             <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
                 <div class="text-2xl mb-2">🤖</div>
@@ -119,11 +107,9 @@
                 <p class="text-xs font-medium text-gray-700">Secure Login</p>
             </div>
         </div>
-
     </main>
 
     <script>
-        // Javascript
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const loginDropdown = document.getElementById('loginDropdown');
