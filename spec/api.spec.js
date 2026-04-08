@@ -1,0 +1,282 @@
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const supertest = require("supertest");
+
+const testDbPath = path.join(__dirname, "test-app.db");
+
+function clearAllTables(done) {
+    const db = require("../database");
+    db.serialize(() => {
+        db.run("DELETE FROM messages");
+        db.run("DELETE FROM conversations");
+        db.run("DELETE FROM login_activity");
+        db.run("DELETE FROM progress");
+        db.run("DELETE FROM users", (err) => {
+            if (err) {
+                return done(err);
+            }
+            done();
+        });
+    });
+}
+
+describe("REST API (integration)", () => {
+    let request;
+
+    beforeAll(() => {
+        process.env.DATABASE_PATH = testDbPath;
+        process.env.MOCK_LLM = "true";
+        if (fs.existsSync(testDbPath)) {
+            fs.unlinkSync(testDbPath);
+        }
+        const { createApp } = require("../app");
+        request = supertest(createApp());
+    });
+
+    beforeEach((done) => {
+        clearAllTables(done);
+    });
+
+    it("registers a new user", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "Test User",
+                email: "t1@test.edu",
+                password: "Password123"
+            })
+            .expect(200)
+            .end((err, res) => {
+                if (err) return done(err);
+                expect(res.body.message).toContain("registered");
+                done();
+            });
+    });
+
+    it("rejects duplicate email on register", (done) => {
+        const body = {
+            name: "A",
+            email: "dup@test.edu",
+            password: "Password123"
+        };
+        request
+            .post("/api/register")
+            .send(body)
+            .expect(200)
+            .end((err) => {
+                if (err) return done(err);
+                request
+                    .post("/api/register")
+                    .send(body)
+                    .expect(400)
+                    .end((e2, res) => {
+                        if (e2) return done(e2);
+                        expect(res.body.error).toBe("Email already in use");
+                        done();
+                    });
+            });
+    });
+
+    it("logs in with valid credentials and returns a JWT", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "L",
+                email: "log@test.edu",
+                password: "Password123"
+            })
+            .end((err) => {
+                if (err) return done(err);
+                request
+                    .post("/api/login")
+                    .send({ email: "log@test.edu", password: "Password123" })
+                    .expect(200)
+                    .end((e2, res) => {
+                        if (e2) return done(e2);
+                        expect(res.body.token).toBeDefined();
+                        expect(res.body.userId).toBeDefined();
+                        done();
+                    });
+            });
+    });
+
+    it("rejects login with invalid password", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "L",
+                email: "badpw@test.edu",
+                password: "Password123"
+            })
+            .end((err) => {
+                if (err) return done(err);
+                request
+                    .post("/api/login")
+                    .send({
+                        email: "badpw@test.edu",
+                        password: "wrongpassword"
+                    })
+                    .expect(401)
+                    .end((e2, res) => {
+                        if (e2) return done(e2);
+                        expect(res.body.error).toBe("Invalid password");
+                        done();
+                    });
+            });
+    });
+
+    it("locks account after five failed login attempts", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "Lock",
+                email: "lock@test.edu",
+                password: "Password123"
+            })
+            .end((err) => {
+                if (err) return done(err);
+                let n = 0;
+                function failOnce(cb) {
+                    request
+                        .post("/api/login")
+                        .send({
+                            email: "lock@test.edu",
+                            password: "wrong"
+                        })
+                        .end((e, res) => {
+                            if (e) return cb(e);
+                            expect(res.status).toBe(401);
+                            n += 1;
+                            if (n < 5) return failOnce(cb);
+                            cb();
+                        });
+                }
+                failOnce((e3) => {
+                    if (e3) return done(e3);
+                    request
+                        .post("/api/login")
+                        .send({
+                            email: "lock@test.edu",
+                            password: "wrong"
+                        })
+                        .expect(403)
+                        .end((e4, res) => {
+                            if (e4) return done(e4);
+                            expect(res.body.error).toBe(
+                                "Account temporarily locked"
+                            );
+                            done();
+                        });
+                });
+            });
+    });
+
+    it("returns progress for authenticated user only", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "P",
+                email: "prog@test.edu",
+                password: "Password123"
+            })
+            .end((err) => {
+                if (err) return done(err);
+                request
+                    .post("/api/login")
+                    .send({
+                        email: "prog@test.edu",
+                        password: "Password123"
+                    })
+                    .end((e2, res) => {
+                        if (e2) return done(e2);
+                        const token = res.body.token;
+                        request
+                            .get("/api/progress")
+                            .set("Authorization", "Bearer " + token)
+                            .expect(200)
+                            .end((e3, r2) => {
+                                if (e3) return done(e3);
+                                expect(r2.body.progress).toEqual([]);
+                                done();
+                            });
+                    });
+            });
+    });
+
+    it("requires auth for conversations", (done) => {
+        request
+            .post("/api/conversations")
+            .expect(401)
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+                done();
+            });
+    });
+
+    it("creates conversation, sends message, receives mock LLM reply", (done) => {
+        request
+            .post("/api/register")
+            .send({
+                name: "C",
+                email: "conv@test.edu",
+                password: "Password123"
+            })
+            .end((err) => {
+                if (err) return done(err);
+                request
+                    .post("/api/login")
+                    .send({
+                        email: "conv@test.edu",
+                        password: "Password123"
+                    })
+                    .end((e2, res) => {
+                        if (e2) return done(e2);
+                        const token = res.body.token;
+                        request
+                            .post("/api/conversations")
+                            .set("Authorization", "Bearer " + token)
+                            .send({})
+                            .expect(201)
+                            .end((e3, cres) => {
+                                if (e3) return done(e3);
+                                const cid = cres.body.id;
+                                request
+                                    .post(
+                                        "/api/conversations/" +
+                                            cid +
+                                            "/messages"
+                                    )
+                                    .set("Authorization", "Bearer " + token)
+                                    .send({ message: "Hello" })
+                                    .expect(200)
+                                    .end((e4, mres) => {
+                                        if (e4) return done(e4);
+                                        expect(mres.body.reply).toContain(
+                                            "Mock assistant reply"
+                                        );
+                                        request
+                                            .get(
+                                                "/api/conversations/search?q=Hello"
+                                            )
+                                            .set(
+                                                "Authorization",
+                                                "Bearer " + token
+                                            )
+                                            .expect(200)
+                                            .end((e5, sres) => {
+                                                if (e5) return done(e5);
+                                                expect(
+                                                    sres.body.results.length
+                                                ).toBeGreaterThan(0);
+                                                done();
+                                            });
+                                    });
+                            });
+                    });
+            });
+    });
+});
