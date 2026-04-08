@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - EntryPoint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="flex flex-col min-h-screen m-0">
+
+    <header class="flex items-center gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300 flex-wrap">
+        <a href="landing.html" class="px-5 py-2 text-white bg-green-500 rounded hover:bg-green-700">Home</a>
+        <a href="dashboard.html" class="px-5 py-2 text-white bg-green-600 rounded hover:bg-green-800">Dashboard</a>
+        <button type="button" id="btn-new-chat" class="px-5 py-2 text-white bg-green-500 rounded hover:bg-green-700">
+            New Chat
+        </button>
+        <input type="search" id="search-input" placeholder="Search conversations..."
+               class="px-3 py-2 border rounded text-sm flex-1 min-w-[160px] max-w-md"
+               data-testid="chat-search">
+        <button type="button" id="btn-search" class="px-4 py-2 bg-gray-700 text-white rounded text-sm hover:bg-gray-800">
+            Search
+        </button>
+        <button type="button" onclick="logout()" class="ml-auto px-5 py-2 text-white bg-red-500 rounded hover:bg-red-700">
+            Logout
+        </button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+
+        <aside class="w-56 sm:w-64 bg-gray-50 border-r border-gray-300 p-3 flex flex-col gap-2 overflow-y-auto" id="sidebar">
+            <h2 class="text-sm text-gray-600 mb-1">Conversations</h2>
+            <div id="conversation-list" class="flex flex-col gap-1"></div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0">
+
+            <div id="messages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+                <div class="text-gray-400 text-sm text-center" id="messages-placeholder">
+                    Select a conversation or start a new chat.
+                </div>
+            </div>
+
+            <div class="flex gap-2 p-4 border-t">
+                <input id="ep-chat-input" type="text" placeholder="Type a message..."
+                       class="flex-1 px-4 py-2 border rounded"
+                       data-testid="chat-message-input"
+                       onkeydown="if(event.key==='Enter') sendMessage()">
+                <button type="button" id="btn-send" onclick="sendMessage()" data-testid="chat-send"
+                        class="px-5 py-2 bg-green-500 text-white rounded hover:bg-green-700">
+                    Send →
+                </button>
+            </div>
+        </main>
+    </div>
+
+<script>
+(function () {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    let currentConversationId = null;
+
+    function authJsonHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        };
+    }
+
+    function authHeaders() {
+        return { 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+    }
+
+    function clearMessagesUi() {
+        const el = document.getElementById('messages');
+        el.innerHTML = '';
+        const ph = document.createElement('div');
+        ph.className = 'text-gray-400 text-sm text-center';
+        ph.id = 'messages-placeholder';
+        ph.textContent = 'Select a conversation or start a new chat.';
+        el.appendChild(ph);
+    }
+
+    function addMessage(text, isUser) {
+        const messages = document.getElementById('messages');
+        const ph = document.getElementById('messages-placeholder');
+        if (ph) ph.remove();
+
+        const div = document.createElement('div');
+        div.className = isUser
+            ? 'self-end bg-green-500 text-white px-4 py-2 rounded max-w-lg break-words'
+            : 'self-start bg-gray-200 text-black px-4 py-2 rounded max-w-lg break-words';
+        div.setAttribute('data-role', isUser ? 'user' : 'assistant');
+        div.textContent = text;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function renderConversationList(items, activeId) {
+        const list = document.getElementById('conversation-list');
+        list.innerHTML = '';
+        items.forEach(function (c) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'text-left text-sm px-2 py-2 rounded w-full hover:bg-green-100 ' +
+                (String(c.id) === String(activeId) ? 'bg-green-200 font-medium' : 'bg-white border border-gray-200');
+            btn.setAttribute('data-conversation-id', String(c.id));
+            btn.textContent = c.title || ('Chat #' + c.id);
+            btn.onclick = function () {
+                openConversation(c.id);
+            };
+            list.appendChild(btn);
+        });
+    }
+
+    function loadConversations(highlightId) {
+        fetch('/api/conversations', { headers: authHeaders() })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                renderConversationList(data.conversations || [], highlightId);
+            })
+            .catch(function () {});
+    }
+
+    function openConversation(id) {
+        currentConversationId = id;
+        fetch('/api/conversations/' + id + '/messages', { headers: authHeaders() })
+            .then(function (r) {
+                if (!r.ok) throw new Error('load fail');
+                return r.json();
+            })
+            .then(function (data) {
+                const messages = document.getElementById('messages');
+                messages.innerHTML = '';
+                (data.messages || []).forEach(function (m) {
+                    addMessage(m.content, m.role === 'user');
+                });
+                if ((data.messages || []).length === 0) {
+                    clearMessagesUi();
+                }
+                loadConversations(id);
+            })
+            .catch(function () {
+                clearMessagesUi();
+            });
+    }
+
+    document.getElementById('btn-new-chat').addEventListener('click', function () {
+        fetch('/api/conversations', {
+            method: 'POST',
+            headers: authJsonHeaders(),
+            body: JSON.stringify({})
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                currentConversationId = data.id;
+                clearMessagesUi();
+                loadConversations(data.id);
+            });
+    });
+
+    document.getElementById('btn-search').addEventListener('click', function () {
+        const q = document.getElementById('search-input').value.trim();
+        if (!q) {
+            loadConversations(currentConversationId);
+            return;
+        }
+        fetch('/api/conversations/search?q=' + encodeURIComponent(q), { headers: authHeaders() })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                renderConversationList(data.results || [], currentConversationId);
+            });
+    });
+
+    window.sendMessage = function () {
+        const input = document.getElementById('ep-chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (!currentConversationId) {
+            fetch('/api/conversations', {
+                method: 'POST',
+                headers: authJsonHeaders(),
+                body: JSON.stringify({})
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    currentConversationId = data.id;
+                    input.value = '';
+                    document.getElementById('messages').innerHTML = '';
+                    postMessageToConversation(text);
+                    loadConversations(currentConversationId);
+                });
+            return;
+        }
+
+        input.value = '';
+        postMessageToConversation(text);
+    };
+
+    function postMessageToConversation(text) {
+        addMessage(text, true);
+        addMessage('...', false);
+
+        fetch('/api/conversations/' + currentConversationId + '/messages', {
+            method: 'POST',
+            headers: authJsonHeaders(),
+            body: JSON.stringify({ message: text })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+                addMessage(data.reply || data.error || 'Error', false);
+                loadConversations(currentConversationId);
+            })
+            .catch(function () {
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+                addMessage('Error connecting to server.', false);
+            });
+    }
+
+    window.logout = function () {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('firstMessage');
+        localStorage.removeItem('openConversationId');
+        window.location.href = 'landing.html';
+    };
+
+    function bootstrap() {
+        const first = localStorage.getItem('firstMessage');
+        const openId = localStorage.getItem('openConversationId');
+
+        if (first) {
+            localStorage.removeItem('firstMessage');
+            fetch('/api/conversations', {
+                method: 'POST',
+                headers: authJsonHeaders(),
+                body: JSON.stringify({})
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (conv) {
+                    currentConversationId = conv.id;
+                    document.getElementById('messages').innerHTML = '';
+                    postMessageToConversation(first);
+                });
+            return;
+        }
+
+        if (openId) {
+            localStorage.removeItem('openConversationId');
+            openConversation(parseInt(openId, 10));
+            return;
+        }
+
+        loadConversations(null);
+    }
+
+    bootstrap();
+})();
+</script>
+
+</body>
+</html>
