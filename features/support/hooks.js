@@ -123,5 +123,9 @@ Before(async function () {
 });
 
 After(async function () {
+    const pauseMs = Number.parseInt(process.env.CUCUMBER_PAUSE_MS || "", 10);
+    if (Number.isFinite(pauseMs) && pauseMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, pauseMs));
+    }
     await this.closeBrowser();
 });
