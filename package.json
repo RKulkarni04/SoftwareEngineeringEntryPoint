@@ -7,7 +7,7 @@
     "start": "node server.js",
     "test": "npm run test:jasmine && npm run test:cucumber",
     "test:jasmine": "cross-env DATABASE_PATH=./spec/test-app.db MOCK_LLM=true node ./node_modules/jasmine/bin/jasmine.js --config=jasmine.json",
-    "test:cucumber": "cucumber-js",
+    "test:cucumber": "cucumber-js \"features/**/*.feature\"",
     "lint": "eslint ."
   },
   "keywords": [],
