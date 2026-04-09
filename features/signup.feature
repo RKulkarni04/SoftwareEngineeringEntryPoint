@@ -7,6 +7,6 @@ Feature: User Sign Up
 
   Scenario: Duplicate email rejected
     Given I am on the signup page
-    When I enter signup name "Someone", email "existing@test.edu", password "Password123"
+    When I enter signup name "Someone", email "existing@test.edu", password "EntryPoint_Tst_9fK2mQx!"
     And I click the signup submit button
     Then I should see signup error "Email already in use"
