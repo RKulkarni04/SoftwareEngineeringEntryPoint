@@ -68,6 +68,48 @@ Then(
     }
 );
 
+When(
+    "I open the conversation containing {string} in the sidebar",
+    async function (marker) {
+        await this.page.waitForSelector("#conversation-list", { timeout: 15000 });
+        await this.page.waitForFunction(
+            (m) => {
+                const list = document.getElementById("conversation-list");
+                return list && list.innerText.includes(m);
+            },
+            { timeout: 15000 },
+            marker
+        );
+        const loadPromise = this.page.waitForResponse(
+            (res) =>
+                res.request().method() === "GET" &&
+                res.url().includes("/messages"),
+            { timeout: 15000 }
+        );
+        const clicked = await this.page.evaluate((m) => {
+            const list = document.getElementById("conversation-list");
+            if (!list) return false;
+            const buttons = list.querySelectorAll("button[data-conversation-id]");
+            for (const b of buttons) {
+                if (b.textContent && b.textContent.includes(m)) {
+                    b.click();
+                    return true;
+                }
+            }
+            return false;
+        }, marker);
+        if (!clicked) {
+            throw new Error(
+                `No conversation in sidebar list matching "${marker}"`
+            );
+        }
+        await loadPromise;
+        await this.page.waitForSelector("#messages [data-role]", {
+            timeout: 15000
+        });
+    }
+);
+
 When("I search conversations for {string}", async function (query) {
     await this.page.waitForSelector("#search-input");
     await this.page.click("#search-input", { clickCount: 3 });
@@ -90,3 +132,19 @@ Then(
         );
     }
 );
+
+Then("I should see chat history containing {string}", async function (text) {
+    await this.page.waitForFunction(
+        (t) => {
+            const nodes = document.querySelectorAll("#messages [data-role='user']");
+            for (const n of nodes) {
+                if (n.textContent && n.textContent.includes(t)) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        { timeout: 15000 },
+        text
+    );
+});
