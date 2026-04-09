@@ -1,7 +1,7 @@
 Feature: User Login
   Scenario: Successful login
     Given I am on the login page
-    When I enter "testuser@test.edu" and "password123"
+    When I enter "testuser@test.edu" and "EntryPoint_Tst_9fK2mQx!"
     And I click the login button
     Then I should be redirected to the dashboard
 
