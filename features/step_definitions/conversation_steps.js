@@ -35,6 +35,26 @@ Given(
     }
 );
 
+When("I start a new empty chat", async function () {
+    const createPromise = this.page.waitForResponse(
+        (res) => {
+            const u = res.url();
+            return (
+                res.request().method() === "POST" &&
+                u.includes("/api/conversations") &&
+                !u.includes("/messages")
+            );
+        },
+        { timeout: 15000 }
+    );
+    await this.page.click("#btn-new-chat");
+    await createPromise;
+    await this.page.waitForFunction(
+        () => document.getElementById("messages-placeholder") !== null,
+        { timeout: 15000 }
+    );
+});
+
 When("I send the chat message {string}", async function (message) {
     await this.page.waitForSelector("#ep-chat-input");
     await this.page.$eval("#ep-chat-input", (el, m) => {
