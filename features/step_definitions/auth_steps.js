@@ -123,7 +123,7 @@ When("I sign up as a new unique user", async function () {
     await this.page.waitForSelector("#signup-email");
     await this.page.type("#signup-name", "New User");
     await this.page.type("#signup-email", email);
-    await this.page.type("#signup-password", "Password123");
+    await this.page.type("#signup-password", "EntryPoint_Tst_9fK2mQx!");
     await this.page.click("#signup-submit");
 });
 
