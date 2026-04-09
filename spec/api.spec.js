@@ -46,7 +46,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "Test User",
                     email: "t1@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .expect(200)
                 .end((err, res) => {
@@ -60,7 +60,7 @@ describe("REST API (integration)", () => {
             const body = {
                 name: "A",
                 email: "dup@test.edu",
-                password: "Password123"
+                password: "EntryPoint_Tst_9fK2mQx!"
             };
             request
                 .post("/api/register")
@@ -86,13 +86,13 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "L",
                     email: "log@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
                     request
                         .post("/api/login")
-                        .send({ email: "log@test.edu", password: "Password123" })
+                        .send({ email: "log@test.edu", password: "EntryPoint_Tst_9fK2mQx!" })
                         .expect(200)
                         .end((e2, res) => {
                             if (e2) return done(e2);
@@ -109,7 +109,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "L",
                     email: "badpw@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
@@ -134,7 +134,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "Lock",
                     email: "lock@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
@@ -180,7 +180,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "P",
                     email: "prog@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
@@ -188,7 +188,7 @@ describe("REST API (integration)", () => {
                         .post("/api/login")
                         .send({
                             email: "prog@test.edu",
-                            password: "Password123"
+                            password: "EntryPoint_Tst_9fK2mQx!"
                         })
                         .end((e2, res) => {
                             if (e2) return done(e2);
@@ -226,7 +226,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "C",
                     email: "conv@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
@@ -234,7 +234,7 @@ describe("REST API (integration)", () => {
                         .post("/api/login")
                         .send({
                             email: "conv@test.edu",
-                            password: "Password123"
+                            password: "EntryPoint_Tst_9fK2mQx!"
                         })
                         .end((e2, res) => {
                             if (e2) return done(e2);
@@ -289,7 +289,7 @@ describe("REST API (integration)", () => {
                 .send({
                     name: "Hist",
                     email: "hist@test.edu",
-                    password: "Password123"
+                    password: "EntryPoint_Tst_9fK2mQx!"
                 })
                 .end((err) => {
                     if (err) return done(err);
@@ -297,7 +297,7 @@ describe("REST API (integration)", () => {
                         .post("/api/login")
                         .send({
                             email: "hist@test.edu",
-                            password: "Password123"
+                            password: "EntryPoint_Tst_9fK2mQx!"
                         })
                         .end((e2, res) => {
                             if (e2) return done(e2);
