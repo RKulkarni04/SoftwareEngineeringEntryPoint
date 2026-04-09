@@ -1,19 +1,19 @@
 Feature: Conversation history and LLM chat
   Scenario: User sends a message and sees assistant reply
-    Given I am logged in as "testuser@test.edu" with password "password123"
+    Given I am logged in as "testuser@test.edu" with password "EntryPoint_Tst_9fK2mQx!"
     And I open the chat page
     When I send the chat message "Hello from E2E"
     Then I should see assistant text containing "Mock assistant"
 
   Scenario: User searches conversations
-    Given I am logged in as "testuser@test.edu" with password "password123"
+    Given I am logged in as "testuser@test.edu" with password "EntryPoint_Tst_9fK2mQx!"
     And I have a conversation titled with content "UniqueSearchMarker"
     And I open the chat page
     When I search conversations for "UniqueSearchMarker"
     Then I should see a conversation result containing "UniqueSearchMarker"
 
   Scenario: User continues the same conversation after switching to a new chat
-    Given I am logged in as "testuser@test.edu" with password "password123"
+    Given I am logged in as "testuser@test.edu" with password "EntryPoint_Tst_9fK2mQx!"
     And I open the chat page
     When I send the chat message "who are you?"
     Then I should see assistant text containing "Mock assistant"
