@@ -100,13 +100,13 @@ BeforeAll({ timeout: 120000 }, async function () {
     await postJson("127.0.0.1", testPort, "/api/register", {
         name: "E2E User",
         email: "testuser@test.edu",
-        password: "password123"
+        password: "EntryPoint_Tst_9fK2mQx!"
     });
 
     await postJson("127.0.0.1", testPort, "/api/register", {
         name: "Existing",
         email: "existing@test.edu",
-        password: "Password123"
+        password: "EntryPoint_Tst_9fK2mQx!"
     });
 });
 
