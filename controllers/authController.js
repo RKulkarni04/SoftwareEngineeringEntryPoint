@@ -1,4 +1,4 @@
-const ollama = require("ollama");
+
 const db = require("../database");
 const ollama = require("ollama");
 const bcrypt = require("bcryptjs");
@@ -6,21 +6,17 @@ const jwt = require("jsonwebtoken");
 
 const SECRET = "supersecretkey";
 
-
 // REGISTER USER
 exports.registerUser = async (req, res) => {
-
     const { name, email, password } = req.body;
 
     try {
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
         db.run(
             "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
             [name, email, hashedPassword],
             function(err) {
-
                 if (err) {
                     return res.status(400).json({ error: err.message });
                 }
@@ -37,7 +33,6 @@ exports.registerUser = async (req, res) => {
 
 // LOGIN USER
 exports.loginUser = (req, res) => {
-
     const { email, password } = req.body;
 
     db.get(
@@ -65,7 +60,6 @@ exports.loginUser = (req, res) => {
                 { expiresIn: "1h" }
             );
 
-            // Record login activity
             db.run(
                 "INSERT INTO login_activity (student_id, login_time) VALUES (?, datetime('now'))",
                 [user.id]
@@ -76,7 +70,6 @@ exports.loginUser = (req, res) => {
                 token: token,
                 userId: user.id
             });
-
         }
     );
 };
@@ -84,7 +77,6 @@ exports.loginUser = (req, res) => {
 
 // GET STUDENT PROGRESS
 exports.getProgress = (req, res) => {
-
     const studentId = req.params.id;
 
     db.all(
@@ -100,7 +92,6 @@ exports.getProgress = (req, res) => {
                 studentId: studentId,
                 progress: rows
             });
-
         }
     );
 };
@@ -108,7 +99,6 @@ exports.getProgress = (req, res) => {
 
 // GET LOGIN ACTIVITY
 exports.getActivity = (req, res) => {
-
     const studentId = req.params.id;
 
     db.all(
@@ -124,26 +114,26 @@ exports.getActivity = (req, res) => {
                 studentId: studentId,
                 loginHistory: rows
             });
-
         }
     );
 };
 
 
 // CHAT MESSAGE - sends message to Ollama and saves to database
+// CHAT MESSAGE (THIS IS THE IMPORTANT PART)
 exports.chatMessage = async (req, res) => {
 
     const { message } = req.body;
     const userId = req.user.id;
 
     try {
-        const ollama = require("ollama");
-        const response = await ollama.chat({
+        const ollamaLib = require("ollama");
+        const ollamaResponse = await ollamaLib.chat({
             model: "llama3",
             messages: [{ role: "user", content: message }]
         });
 
-        const reply = response.message.content;
+        const reply = ollamaResponse.message.content;
 
         // Save conversation to database
         db.run(
@@ -152,12 +142,41 @@ exports.chatMessage = async (req, res) => {
         );
 
         res.json({ reply });
+        const response = await fetch("http://127.0.0.1:11434/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama3",
+                messages: [
+                    { role: "user", content: message }
+                ],
+                stream: false
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Ollama HTTP error:", data);
+            return res.status(500).json({
+                reply: data.error || "AI model error. Make sure Ollama is running."
+            });
+        }
+
+        res.json({
+            reply: data.message?.content || "No response from model."
+        });
 
     } catch (err) {
-        console.error("Ollama error:", err);
-        res.status(500).json({ reply: "AI model error. Make sure Ollama is running." });
+        console.error("Ollama fetch error:", err);
+        res.status(500).json({
+            reply: "AI model error. Make sure Ollama is running."
+        });
     }
 };
+
 
 
 // GET CONVERSATION HISTORY

@@ -1,34 +1,32 @@
-// Import required libraries
 const express = require("express");
 const cors = require("cors");
-const path = require("path"); // Added to help build file paths correctly
+const path = require("path");
 
-// Connect to the database (this runs database.js)
+// Connect to the database
 require("./database");
 
-// Import the API routes
+// Import API routes
 const authRoutes = require("./routes/authRoutes");
 
-// Create the Express application
+// Create app
 const app = express();
 
 // Middleware
-app.use(cors());           // Allows frontend to communicate with backend
-app.use(express.json());   // Allows server to read JSON request bodies
+app.use(cors());
+app.use(express.json());
 
-// Serve all files in the frontend/ folder as static files
-// This allows the browser to access landing.html, chat.html, signup.html etc.
+// Serve frontend files
 app.use(express.static(path.join(__dirname, "frontend")));
 
-// Connect the routes under /api
+// API routes
 app.use("/api", authRoutes);
 
-// Load the landing page when user visits the root URL (localhost:3000)
+// Root route
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "frontend", "landing.html"));
 });
 
-// Start the server
+// Start server
 const PORT = 3000;
 
 app.listen(PORT, () => {
