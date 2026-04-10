@@ -1,10 +1,9 @@
-
 const db = require("../database");
-const ollama = require("ollama");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const SECRET = "supersecretkey";
+
 
 // REGISTER USER
 exports.registerUser = async (req, res) => {
@@ -20,7 +19,6 @@ exports.registerUser = async (req, res) => {
                 if (err) {
                     return res.status(400).json({ error: err.message });
                 }
-
                 res.json({ message: "User registered successfully" });
             }
         );
@@ -60,6 +58,7 @@ exports.loginUser = (req, res) => {
                 { expiresIn: "1h" }
             );
 
+            // Record login activity
             db.run(
                 "INSERT INTO login_activity (student_id, login_time) VALUES (?, datetime('now'))",
                 [user.id]
@@ -119,29 +118,14 @@ exports.getActivity = (req, res) => {
 };
 
 
-// CHAT MESSAGE - sends message to Ollama and saves to database
-// CHAT MESSAGE (THIS IS THE IMPORTANT PART)
+// CHAT MESSAGE - sends message to Ollama via HTTP and saves reply to database
 exports.chatMessage = async (req, res) => {
 
     const { message } = req.body;
     const userId = req.user.id;
 
     try {
-        const ollamaLib = require("ollama");
-        const ollamaResponse = await ollamaLib.chat({
-            model: "llama3",
-            messages: [{ role: "user", content: message }]
-        });
-
-        const reply = ollamaResponse.message.content;
-
-        // Save conversation to database
-        db.run(
-            "INSERT INTO conversations (user_id, message, reply, created_at) VALUES (?, ?, ?, datetime('now'))",
-            [userId, message, reply]
-        );
-
-        res.json({ reply });
+        // Send message to locally running Ollama model via HTTP
         const response = await fetch("http://127.0.0.1:11434/api/chat", {
             method: "POST",
             headers: {
@@ -149,9 +133,7 @@ exports.chatMessage = async (req, res) => {
             },
             body: JSON.stringify({
                 model: "llama3",
-                messages: [
-                    { role: "user", content: message }
-                ],
+                messages: [{ role: "user", content: message }],
                 stream: false
             })
         });
@@ -165,9 +147,15 @@ exports.chatMessage = async (req, res) => {
             });
         }
 
-        res.json({
-            reply: data.message?.content || "No response from model."
-        });
+        const reply = data.message?.content || "No response from model.";
+
+        // Save conversation to database for history and search
+        db.run(
+            "INSERT INTO conversations (user_id, message, reply, created_at) VALUES (?, ?, ?, datetime('now'))",
+            [userId, message, reply]
+        );
+
+        res.json({ reply });
 
     } catch (err) {
         console.error("Ollama fetch error:", err);
@@ -176,7 +164,6 @@ exports.chatMessage = async (req, res) => {
         });
     }
 };
-
 
 
 // GET CONVERSATION HISTORY
