@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EntryPoint</title>
+    <!-- Tailwind CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for clean modern look -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -13,9 +15,10 @@
 </head>
 <body class="flex flex-col min-h-screen bg-white text-gray-800">
 
-    <!-- Navbar -->
+    <!-- ===== NAVBAR ===== -->
     <header class="flex items-center px-8 py-4 border-b border-gray-100 shadow-sm bg-white">
-        <!-- Logo -->
+
+        <!-- Logo and site name -->
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                 <span class="text-white font-bold text-sm">EP</span>
@@ -23,39 +26,55 @@
             <span class="text-xl font-bold logo-text text-gray-900">EntryPoint</span>
         </div>
 
-        <!-- Nav links -->
+        <!-- Navigation links -->
         <nav class="flex items-center gap-6 ml-10">
             <a href="landing.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Home</a>
             <a href="chat.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Chat</a>
         </nav>
 
-        <!-- Auth area -->
+        <!-- Auth area - login/logout buttons on the right -->
         <div class="relative ml-auto flex items-center gap-3">
             <span id="welcomeText" class="hidden text-sm text-gray-500"></span>
+
+            <!-- Login button - shown by default when user is logged out -->
             <button id="loginBtn" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition shadow-sm">
                 Login
             </button>
+
+            <!-- Logout button - hidden by default, only shown after successful login -->
             <button id="logoutBtn" class="hidden px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition shadow-sm">
                 Logout
             </button>
 
-            <!-- Login Dropdown -->
+            <!-- Login dropdown - toggles when login button is clicked -->
             <div class="absolute right-0 top-12 z-10 hidden w-72 p-5 bg-white rounded-xl shadow-xl border border-gray-100" id="loginDropdown">
                 <h3 class="text-base font-semibold mb-4 text-gray-800">Welcome back</h3>
+
+                <!-- Error message shown if login fails -->
                 <div id="errorMsg" class="hidden text-red-500 text-xs mb-3 bg-red-50 px-3 py-2 rounded-lg"></div>
+
                 <div class="flex flex-col gap-3">
+                    <!-- Email input -->
                     <input type="email" id="email" placeholder="Email address"
                            class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+
+                    <!-- Password input -->
                     <input type="password" id="password" placeholder="Password"
                            class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+
+                    <!-- Login button - calls loginUser() which uses fetch() instead of form POST -->
                     <button onclick="loginUser()" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
                         Log In
                     </button>
+
+                    <!-- Divider -->
                     <div class="flex items-center gap-2 my-1">
                         <div class="flex-1 h-px bg-gray-200"></div>
                         <span class="text-xs text-gray-400">or</span>
                         <div class="flex-1 h-px bg-gray-200"></div>
                     </div>
+
+                    <!-- Link to signup page for new users -->
                     <a href="signup.html" class="px-4 py-2 text-sm font-medium text-center text-green-600 border border-green-500 rounded-lg hover:bg-green-50 transition">
                         Create an account
                     </a>
@@ -64,25 +83,19 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- ===== MAIN CONTENT ===== -->
     <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-b from-white to-green-50">
 
-        <!-- Badge -->
-        <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full mb-6">
-            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-            AI-Powered Learning Assistant
-        </div>
-
-        <!-- Heading -->
+        <!-- Page heading - describes the app as a teaching assistant -->
         <h1 class="text-5xl font-bold text-center text-gray-900 mb-4 leading-tight">
-            Your Intelligent <br>
-            <span class="text-green-500">Entry Point</span>
+            Your Personal <br>
+            <span class="text-green-500">Teaching Assistant</span>
         </h1>
         <p class="text-gray-500 text-center text-base max-w-md mb-10">
-            Ask anything, learn faster. EntryPoint connects you with AI to help you study smarter.
+            Ask questions, get clear explanations, and understand concepts deeply — learn at your own pace.
         </p>
 
-        <!-- Chat input -->
+        <!-- Chat input box - saves message to localStorage and redirects to chat.html -->
         <div class="flex items-center gap-2 w-full max-w-lg bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3">
             <input type="text" id="chatInput" placeholder="Ask a question to get started..."
                    class="flex-1 text-sm text-gray-700 outline-none bg-transparent"
@@ -92,10 +105,11 @@
             </button>
         </div>
 
-        <!-- Previous chats (shown when logged in) -->
+        <!-- Previous chats list - hidden by default, shown after login -->
         <div id="chatHistory" class="hidden w-full max-w-lg mt-10">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Previous Chats</h2>
             <ul id="chatList" class="bg-white border border-gray-100 rounded-xl divide-y divide-gray-100 shadow-sm">
+                <!-- Each item links to the chat page -->
                 <li class="px-4 py-3 text-sm text-gray-700 hover:bg-green-50 cursor-pointer flex items-center gap-2 transition"
                     onclick="window.location.href='chat.html'">
                     <span class="w-2 h-2 bg-green-400 rounded-full"></span>
@@ -104,19 +118,19 @@
             </ul>
         </div>
 
-        <!-- Feature cards (shown when logged out) -->
+        <!-- Feature cards - shown when logged out, hidden after login -->
         <div id="featureCards" class="grid grid-cols-3 gap-4 mt-12 max-w-lg w-full">
             <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">🤖</div>
-                <p class="text-xs font-medium text-gray-700">AI Powered</p>
+                <div class="text-2xl mb-2">💡</div>
+                <p class="text-xs font-medium text-gray-700">Clear explanations</p>
             </div>
             <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">⚡</div>
-                <p class="text-xs font-medium text-gray-700">Instant Answers</p>
+                <div class="text-2xl mb-2">📚</div>
+                <p class="text-xs font-medium text-gray-700">Learn at your pace</p>
             </div>
             <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">🔒</div>
-                <p class="text-xs font-medium text-gray-700">Secure Login</p>
+                <div class="text-2xl mb-2">🎓</div>
+                <p class="text-xs font-medium text-gray-700">Student focused</p>
             </div>
         </div>
 
@@ -124,41 +138,67 @@
 
     <script>
         // Javascript
+
+        // Get references to key elements
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const loginDropdown = document.getElementById('loginDropdown');
 
+        // On page load, verify token is valid before showing logged-in state
+        // This fixes the auto-login bug where logout button showed by default
         window.onload = function() {
             const token = localStorage.getItem('token');
             if (token) {
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-                document.getElementById('chatHistory').classList.remove('hidden');
-                document.getElementById('featureCards').classList.add('hidden');
+                try {
+                    // Decode the JWT token and check if it has expired
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const isExpired = payload.exp * 1000 < Date.now();
+
+                    if (isExpired) {
+                        // Token expired - clear storage and keep login button visible
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('userId');
+                    } else {
+                        // Valid token - switch to logged-in state
+                        loginBtn.classList.add('hidden');
+                        logoutBtn.classList.remove('hidden');
+                        document.getElementById('chatHistory').classList.remove('hidden');
+                        document.getElementById('featureCards').classList.add('hidden');
+                    }
+                } catch(e) {
+                    // Token is malformed - clear storage and reset to logged-out state
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                }
             }
         };
 
+        // Toggle the login dropdown when login button is clicked
         loginBtn.addEventListener('click', function(event) {
-            event.stopPropagation();
+            event.stopPropagation(); // Prevent click from bubbling to window
             loginDropdown.classList.toggle('hidden');
         });
 
+        // Close dropdown if user clicks anywhere outside of it
         window.addEventListener('click', function() {
             if (!loginDropdown.classList.contains('hidden')) {
                 loginDropdown.classList.add('hidden');
             }
         });
 
+        // Prevent dropdown from closing when clicking inside it
         loginDropdown.addEventListener('click', function(event) {
             event.stopPropagation();
         });
 
+        // Send login credentials to backend API using fetch() instead of form POST
         async function loginUser() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
 
             try {
+                // POST request to the login endpoint
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -168,35 +208,45 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    // Save JWT token and userId to localStorage for future authenticated requests
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('userId', data.userId);
+
+                    // Update UI to logged-in state
                     loginBtn.classList.add('hidden');
                     logoutBtn.classList.remove('hidden');
                     loginDropdown.classList.add('hidden');
                     document.getElementById('chatHistory').classList.remove('hidden');
                     document.getElementById('featureCards').classList.add('hidden');
                 } else {
+                    // Show error message if login failed
                     errorMsg.classList.remove('hidden');
                     errorMsg.textContent = data.error || 'Login failed';
                 }
             } catch (err) {
+                // Handle network or server errors
                 errorMsg.classList.remove('hidden');
                 errorMsg.textContent = 'Server error. Please try again.';
             }
         }
 
+        // Clear stored credentials and reset UI to logged-out state
         logoutBtn.addEventListener('click', function() {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
+
+            // Swap back to logged-out state
             loginBtn.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
             document.getElementById('chatHistory').classList.add('hidden');
             document.getElementById('featureCards').classList.remove('hidden');
         });
 
+        // Save typed message to localStorage and redirect to chat page
         function goToChat() {
             const msg = document.getElementById('chatInput').value;
             if (msg.trim()) {
+                // chat.html will read this message and send it automatically
                 localStorage.setItem('firstMessage', msg);
                 window.location.href = 'chat.html';
             }
