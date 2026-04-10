@@ -6,16 +6,24 @@ const {
   loginUser,
   getProgress,
   getActivity,
-  chatMessage
+  chatMessage,
+  getConversations,
+  searchConversations
 } = require("../controllers/authController");
 
 const authenticateToken = require("../middleware/authMiddleware");
 
+// Auth routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
+// Progress and activity routes
 router.get("/progress/:id", authenticateToken, getProgress);
 router.get("/activity/:id", authenticateToken, getActivity);
-router.post("/chat", chatMessage);
+
+// Chat routes
+router.post("/chat", authenticateToken, chatMessage);
+router.get("/conversations/:id", authenticateToken, getConversations);
+router.get("/conversations/search", authenticateToken, searchConversations);
 
 module.exports = router;
