@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - EntryPoint</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Optional: add custom styles if needed (but Tailwind covers most) -->
+</head>
+<body class="flex flex-col min-h-screen m-0">
+
+    <!-- Top bar -->
+    <header class="flex items-center gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
+        <a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
+        <a href="chat.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">New Chat</a>
+        <!-- Logout button always visible on chat page -->
+        <button onclick="logout()" class="ml-auto px-5 py-2 text-base text-white bg-red-500 rounded hover:bg-red-700 transition">Logout</button>
+    </header>
+
+    <!-- Chat layout -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar: previous chats -->
+        <aside class="w-48 bg-gray-50 border-r border-gray-300 p-3 flex flex-col gap-2">
+            <h2 class="text-sm font-semibold text-gray-600">Previous Chats</h2>
+            <div id="chatSidebar" class="flex flex-col gap-1">
+                <div class="px-3 py-2 bg-green-100 rounded text-sm text-green-800 font-medium cursor-pointer">Current Chat</div>
+            </div>
+        </aside>
+
+        <!-- Main chat area -->
+        <main class="flex-1 flex flex-col">
+
+            <!-- Messages display area -->
+            <div id="messages" class="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+                <div class="text-gray-400 text-sm text-center">Start a conversation below</div>
+            </div>
+
+            <!-- Search bar -->
+            <div class="flex gap-2 px-5 py-2 border-t border-gray-200 bg-gray-50">
+                <input type="text" id="searchInput" placeholder="Search previous messages..."
+                       class="flex-1 px-3 py-1 text-sm border border-gray-300 rounded">
+                <button onclick="searchMessages()" class="px-4 py-1 text-sm text-white bg-green-500 rounded hover:bg-green-700 transition">Search</button>
+            </div>
+
+            <!-- Message input box -->
+            <div class="flex gap-2 p-4 border-t border-gray-300 bg-white">
+                <input type="text" id="chatInput" placeholder="Type a message..."
+                       class="flex-1 px-4 py-2 text-base border border-gray-300 rounded"
+                       onkeydown="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" class="px-5 py-2 text-base text-white bg-green-500 rounded hover:bg-green-700 transition">Send →</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Javascript
+
+        // On page load, check for a message passed from landing page
+        window.onload = function() {
+            const firstMessage = localStorage.getItem('firstMessage');
+            if (firstMessage) {
+                localStorage.removeItem('firstMessage');
+                sendMessage(firstMessage);
+            }
+
+            // Load conversation history into sidebar
+            loadHistory();
+        };
+
+        // Add a message bubble to the chat area
+        function addMessage(text, isUser) {
+            const messages = document.getElementById('messages');
+
+            // Remove placeholder text on first message
+            const placeholder = messages.querySelector('.text-gray-400');
+            if (placeholder) placeholder.remove();
+
+            const div = document.createElement('div');
+            div.className = isUser
+                ? 'self-end bg-green-500 text-white px-4 py-2 rounded-lg max-w-xs text-sm'
+                : 'self-start bg-gray-200 text-gray-800 px-4 py-2 rounded-lg max-w-xs text-sm';
+            div.textContent = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Send message to backend and display reply
+        async function sendMessage(overrideText) {
+            const input = document.getElementById('chatInput');
+            const text = overrideText || input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            addMessage(text, true);
+
+            // Show typing indicator
+            addMessage('...', false);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+
+                addMessage(data.reply || 'No response', false);
+
+            } catch (err) {
+                const messages = document.getElementById('messages');
+                messages.removeChild(messages.lastChild);
+                addMessage('Error connecting to server.', false);
+            }
+        }
+
+        // Load conversation history into sidebar
+        async function loadHistory() {
+            const userId = localStorage.getItem('userId');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) return;
+
+            try {
+                const response = await fetch(`/api/conversations/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                const sidebar = document.getElementById('chatSidebar');
+
+                if (data.conversations && data.conversations.length > 0) {
+                    // Show last 5 conversations in sidebar
+                    data.conversations.slice(0, 5).forEach((conv, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'px-3 py-2 rounded text-sm text-gray-700 cursor-pointer hover:bg-gray-200';
+                        div.textContent = conv.message.substring(0, 25) + '...';
+                        sidebar.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error('Could not load history:', err);
+            }
+        }
+
+        // Search through previous messages
+        async function searchMessages() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`/api/conversations/search?query=${query}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                const messages = document.getElementById('messages');
+                messages.innerHTML = '';
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(conv => {
+                        addMessage(conv.message, true);
+                        addMessage(conv.reply, false);
+                    });
+                } else {
+                    messages.innerHTML = '<div class="text-gray-400 text-sm text-center">No results found</div>';
+                }
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+
+        // Clear session and go back to landing page
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            window.location.href = 'landing.html';
+        }
+    </script>
+</body>
+</html>

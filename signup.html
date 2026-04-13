@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<title>Signup Page</title>
+</head>
+
+<body class="flex flex-col min-h-screen m-0">
+
+<header class="flex items-center justify-left gap-4 px-5 py-4 bg-gray-100 border-b border-gray-300">
+<a href="landing.html" class="px-5 py-2 text-base text-center text-white bg-green-500 rounded hover:bg-green-700 transition">Home</a>
+</header>
+
+<main class="flex-1 flex flex-col justify-center items-center p-5">
+
+<h1 class="text-3xl font-bold mb-5">Create an Account</h1>
+
+<form id="signupForm" class="flex flex-col justify-center gap-2 flex-wrap mt-5">
+
+<input type="text" id="name" placeholder="Username" required
+class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+
+<input type="email" id="email" placeholder="Email" required
+class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+
+<input type="password" id="password" placeholder="Password" required
+class="px-4 py-2 text-base border border-gray-300 rounded w-64 max-w-full">
+
+<button type="submit"
+class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-700 transition">
+Create Account
+</button>
+
+</form>
+
+</main>
+
+<script>
+
+document.getElementById("signupForm").addEventListener("submit", async function(event) {
+
+event.preventDefault();
+
+const name = document.getElementById("name").value;
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+
+try {
+
+const response = await fetch("http://localhost:3000/api/register", {
+
+method: "POST",
+
+headers: {
+"Content-Type": "application/json"
+},
+
+body: JSON.stringify({
+name: name,
+email: email,
+password: password
+})
+
+});
+
+const data = await response.json();
+
+if (response.ok) {
+
+alert("Account created successfully!");
+window.location.href = "landing.html";
+
+} else {
+
+alert(data.error || "Signup failed");
+
+}
+
+} catch (error) {
+
+alert("Could not connect to server");
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
