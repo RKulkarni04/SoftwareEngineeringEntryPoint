@@ -67,6 +67,11 @@ db.serialize(() => {
             FOREIGN KEY (conversation_id) REFERENCES conversations(id)
         )
     `);
+
+    db.run(
+        "ALTER TABLE messages ADD COLUMN model_outputs TEXT",
+        runIgnoreDuplicateColumn
+    );
 });
 
 /**

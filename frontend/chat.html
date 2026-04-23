@@ -21,6 +21,21 @@
         <button type="button" id="btn-search" class="px-4 py-2 bg-gray-700 text-white rounded text-sm hover:bg-gray-800">
             Search
         </button>
+        <div class="flex flex-wrap items-center gap-2 text-sm border-l border-gray-300 pl-3 ml-1">
+            <span class="text-gray-600 whitespace-nowrap" title="Up to four Ollama model names; each gets the same prompt.">Models</span>
+            <input type="text" id="model-slot-0" maxlength="128" placeholder="llama3"
+                   class="w-[6.5rem] px-2 py-1 border rounded text-xs" data-testid="model-slot-0" aria-label="Ollama model 1">
+            <input type="text" id="model-slot-1" maxlength="128" placeholder="model 2"
+                   class="w-[6.5rem] px-2 py-1 border rounded text-xs" aria-label="Ollama model 2">
+            <input type="text" id="model-slot-2" maxlength="128" placeholder="model 3"
+                   class="w-[6.5rem] px-2 py-1 border rounded text-xs" aria-label="Ollama model 3">
+            <input type="text" id="model-slot-3" maxlength="128" placeholder="model 4"
+                   class="w-[6.5rem] px-2 py-1 border rounded text-xs" aria-label="Ollama model 4">
+            <label class="text-gray-600 whitespace-nowrap" for="model-view-select">View</label>
+            <select id="model-view-select" class="px-2 py-1 border rounded text-xs max-w-[10rem]"
+                    data-testid="model-view-select" title="Which model's assistant text to show">
+            </select>
+        </div>
         <button type="button" onclick="logout()" class="ml-auto px-5 py-2 text-white bg-red-500 rounded hover:bg-red-700">
             Logout
         </button>
@@ -64,6 +79,9 @@
 
     let currentConversationId = null;
 
+    const LS_MODEL_SLOTS = 'ep_ollama_model_slots';
+    const LS_ACTIVE_VIEW = 'ep_ollama_active_view';
+
     function authJsonHeaders() {
         return {
             'Content-Type': 'application/json',
@@ -85,7 +103,137 @@
         el.appendChild(ph);
     }
 
-    function addMessage(text, isUser) {
+    function getModelSlotValues() {
+        const out = [];
+        const seen = new Set();
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById('model-slot-' + i);
+            if (!el) continue;
+            const t = String(el.value || '').trim();
+            if (!t || seen.has(t)) continue;
+            seen.add(t);
+            out.push(t);
+        }
+        return out;
+    }
+
+    function getActiveViewModel() {
+        const sel = document.getElementById('model-view-select');
+        return sel && sel.value ? sel.value : '';
+    }
+
+    function pickShownAssistantText(fallbackContent, modelOutputs) {
+        if (!modelOutputs || typeof modelOutputs !== 'object') {
+            return fallbackContent;
+        }
+        const view = getActiveViewModel();
+        if (view && modelOutputs[view] != null && String(modelOutputs[view]) !== '') {
+            return String(modelOutputs[view]);
+        }
+        return fallbackContent;
+    }
+
+    function collectAllModelIdsForSelect() {
+        const ordered = [];
+        const seen = new Set();
+        getModelSlotValues().forEach(function (id) {
+            if (!seen.has(id)) {
+                seen.add(id);
+                ordered.push(id);
+            }
+        });
+        const extras = [];
+        document.querySelectorAll('#messages [data-role="assistant"]').forEach(function (node) {
+            const o = node._modelOutputs;
+            if (!o || typeof o !== 'object') return;
+            Object.keys(o).forEach(function (k) {
+                if (!seen.has(k)) {
+                    seen.add(k);
+                    extras.push(k);
+                }
+            });
+        });
+        extras.sort();
+        return ordered.concat(extras);
+    }
+
+    function rebuildModelViewSelect() {
+        const sel = document.getElementById('model-view-select');
+        if (!sel) return;
+        const prev = localStorage.getItem(LS_ACTIVE_VIEW) || sel.value;
+        const ids = collectAllModelIdsForSelect();
+        sel.innerHTML = '';
+        if (ids.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '(add model names)';
+            sel.appendChild(opt);
+            return;
+        }
+        ids.forEach(function (id) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = id;
+            sel.appendChild(opt);
+        });
+        if (prev && ids.indexOf(prev) !== -1) {
+            sel.value = prev;
+        }
+        localStorage.setItem(LS_ACTIVE_VIEW, sel.value);
+    }
+
+    function applyActiveModelView() {
+        const sel = document.getElementById('model-view-select');
+        if (sel && sel.value) {
+            localStorage.setItem(LS_ACTIVE_VIEW, sel.value);
+        }
+        document.querySelectorAll('#messages [data-role="assistant"]').forEach(function (node) {
+            const o = node._modelOutputs;
+            if (!o) return;
+            const fb = node._fallbackAssistantText != null ? node._fallbackAssistantText : '';
+            node.textContent = pickShownAssistantText(fb, o);
+        });
+    }
+
+    function loadModelSlotsFromStorage() {
+        try {
+            const raw = localStorage.getItem(LS_MODEL_SLOTS);
+            if (!raw) return;
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) return;
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById('model-slot-' + i);
+                if (el && arr[i]) el.value = String(arr[i]);
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function saveModelSlots() {
+        const arr = [];
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById('model-slot-' + i);
+            arr.push(el ? String(el.value || '') : '');
+        }
+        localStorage.setItem(LS_MODEL_SLOTS, JSON.stringify(arr));
+    }
+
+    function wireModelSlotListeners() {
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById('model-slot-' + i);
+            if (!el) continue;
+            el.addEventListener('input', function () {
+                saveModelSlots();
+                rebuildModelViewSelect();
+                applyActiveModelView();
+            });
+        }
+        const sel = document.getElementById('model-view-select');
+        if (sel) {
+            sel.addEventListener('change', applyActiveModelView);
+        }
+    }
+
+    function addMessage(text, isUser, modelOutputs) {
         const messages = document.getElementById('messages');
         const ph = document.getElementById('messages-placeholder');
         if (ph) ph.remove();
@@ -95,7 +243,13 @@
             ? 'self-end bg-green-500 text-white px-4 py-2 rounded max-w-lg break-words'
             : 'self-start bg-gray-200 text-black px-4 py-2 rounded max-w-lg break-words';
         div.setAttribute('data-role', isUser ? 'user' : 'assistant');
-        div.textContent = text;
+        if (!isUser && modelOutputs && typeof modelOutputs === 'object') {
+            div._modelOutputs = modelOutputs;
+            div._fallbackAssistantText = text;
+            div.textContent = pickShownAssistantText(text, modelOutputs);
+        } else {
+            div.textContent = text;
+        }
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
@@ -137,11 +291,17 @@
                 const messages = document.getElementById('messages');
                 messages.innerHTML = '';
                 (data.messages || []).forEach(function (m) {
-                    addMessage(m.content, m.role === 'user');
+                    if (m.role === 'user') {
+                        addMessage(m.content, true);
+                    } else {
+                        addMessage(m.content, false, m.modelOutputs || null);
+                    }
                 });
                 if ((data.messages || []).length === 0) {
                     clearMessagesUi();
                 }
+                rebuildModelViewSelect();
+                applyActiveModelView();
                 loadConversations(id);
             })
             .catch(function () {
@@ -160,6 +320,8 @@
                 currentConversationId = data.id;
                 clearMessagesUi();
                 loadConversations(data.id);
+                rebuildModelViewSelect();
+                applyActiveModelView();
             });
     });
 
@@ -206,16 +368,28 @@
         addMessage(text, true);
         addMessage('...', false);
 
+        const models = getModelSlotValues();
+        const payload = { message: text };
+        if (models.length) {
+            payload.models = models;
+        }
+
         fetch('/api/conversations/' + currentConversationId + '/messages', {
             method: 'POST',
             headers: authJsonHeaders(),
-            body: JSON.stringify({ message: text })
+            body: JSON.stringify(payload)
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 const messages = document.getElementById('messages');
                 messages.removeChild(messages.lastChild);
-                addMessage(data.reply || data.error || 'Error', false);
+                const modelOutputs = data.replies && typeof data.replies === 'object'
+                    ? data.replies
+                    : null;
+                const replyText = data.reply || data.error || 'Error';
+                addMessage(replyText, false, modelOutputs);
+                rebuildModelViewSelect();
+                applyActiveModelView();
                 loadConversations(currentConversationId);
             })
             .catch(function () {
@@ -261,6 +435,10 @@
 
         loadConversations(null);
     }
+
+    loadModelSlotsFromStorage();
+    wireModelSlotListeners();
+    rebuildModelViewSelect();
 
     bootstrap();
 })();
