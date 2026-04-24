@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-LLM Query - EntryPoint</title>
+    <!-- Tailwind CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-50">
+
+    <!-- Header -->
+    <header class="px-8 py-4 bg-white border-b border-gray-200 shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-sm">EP</span>
+            </div>
+            <span class="text-xl font-bold text-gray-900">EntryPoint — Multi-LLM Query</span>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 flex flex-col items-center px-6 py-10">
+
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Ask Multiple AI Models at Once</h1>
+        <p class="text-gray-500 text-sm mb-8 text-center max-w-lg">
+            Type your question below, select which models to query, and see all responses side by side.
+        </p>
+
+        <!-- Input area -->
+        <div class="w-full max-w-2xl bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
+
+            <!-- Prompt input -->
+            <label class="block text-sm font-medium text-gray-700 mb-2">Your Question</label>
+            <textarea id="promptInput" rows="3" placeholder="e.g. What is machine learning?"
+                      class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 mb-4"></textarea>
+
+            <!-- Model selection checkboxes -->
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Models</label>
+            <div class="flex gap-6 mb-4">
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" id="llama3" value="llama3" checked
+                           class="w-4 h-4 text-green-500 rounded">
+                    Llama3
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" id="mistral" value="mistral"
+                           class="w-4 h-4 text-green-500 rounded">
+                    Mistral
+                </label>
+            </div>
+
+            <!-- Error message -->
+            <div id="errorMsg" class="hidden text-red-500 text-sm mb-3 bg-red-50 px-3 py-2 rounded-lg"></div>
+
+            <!-- Send button -->
+            <button onclick="submitQuery()"
+                    class="w-full px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
+                Send to Selected Models →
+            </button>
+        </div>
+
+        <!-- Response panels - shown after submission -->
+        <div id="responsePanels" class="hidden w-full max-w-4xl grid grid-cols-2 gap-6">
+
+            <!-- Llama3 response panel -->
+            <div id="llama3Panel" class="hidden bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <h2 class="text-sm font-semibold text-gray-700">Llama3</h2>
+                </div>
+                <!-- Loading spinner -->
+                <div id="llama3Loading" class="flex justify-center py-6">
+                    <div class="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <!-- Response text -->
+                <p id="llama3Response" class="hidden text-sm text-gray-700 leading-relaxed"></p>
+                <!-- Error text -->
+                <p id="llama3Error" class="hidden text-sm text-red-500"></p>
+            </div>
+
+            <!-- Mistral response panel -->
+            <div id="mistralPanel" class="hidden bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <h2 class="text-sm font-semibold text-gray-700">Mistral</h2>
+                </div>
+                <!-- Loading spinner -->
+                <div id="mistralLoading" class="flex justify-center py-6">
+                    <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <!-- Response text -->
+                <p id="mistralResponse" class="hidden text-sm text-gray-700 leading-relaxed"></p>
+                <!-- Error text -->
+                <p id="mistralError" class="hidden text-sm text-red-500"></p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Javascript
+
+        // Submit prompt to selected models
+        async function submitQuery() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            // Get selected models from checkboxes
+            const selectedModels = [];
+            if (document.getElementById('llama3').checked) selectedModels.push('llama3');
+            if (document.getElementById('mistral').checked) selectedModels.push('mistral');
+
+            // Reset error message
+            errorMsg.classList.add('hidden');
+            errorMsg.textContent = '';
+
+            // Validate prompt
+            if (!prompt) {
+                errorMsg.classList.remove('hidden');
+                errorMsg.textContent = 'Please enter a prompt';
+                return;
+            }
+
+            // Validate model selection
+            if (selectedModels.length === 0) {
+                errorMsg.classList.remove('hidden');
+                errorMsg.textContent = 'Please select at least one model';
+                return;
+            }
+
+            // Show response panels and loading spinners for selected models
+            document.getElementById('responsePanels').classList.remove('hidden');
+
+            // Show or hide panels based on selection
+            if (selectedModels.includes('llama3')) {
+                document.getElementById('llama3Panel').classList.remove('hidden');
+                document.getElementById('llama3Loading').classList.remove('hidden');
+                document.getElementById('llama3Response').classList.add('hidden');
+                document.getElementById('llama3Error').classList.add('hidden');
+            } else {
+                document.getElementById('llama3Panel').classList.add('hidden');
+            }
+
+            if (selectedModels.includes('mistral')) {
+                document.getElementById('mistralPanel').classList.remove('hidden');
+                document.getElementById('mistralLoading').classList.remove('hidden');
+                document.getElementById('mistralResponse').classList.add('hidden');
+                document.getElementById('mistralError').classList.add('hidden');
+            } else {
+                document.getElementById('mistralPanel').classList.add('hidden');
+            }
+
+            try {
+                // Send prompt and selected models to backend
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, models: selectedModels })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorMsg.classList.remove('hidden');
+                    errorMsg.textContent = data.error || 'Something went wrong';
+                    return;
+                }
+
+                // Display each model's response in its panel
+                data.results.forEach(result => {
+                    const loadingEl = document.getElementById(`${result.model}Loading`);
+                    const responseEl = document.getElementById(`${result.model}Response`);
+                    const errorEl = document.getElementById(`${result.model}Error`);
+
+                    // Hide loading spinner
+                    loadingEl.classList.add('hidden');
+
+                    if (result.error) {
+                        // Show error if model failed
+                        errorEl.classList.remove('hidden');
+                        errorEl.textContent = `Error: ${result.error}`;
+                    } else {
+                        // Show response text
+                        responseEl.classList.remove('hidden');
+                        responseEl.textContent = result.reply;
+                    }
+                });
+
+            } catch (err) {
+                // Handle network errors
+                errorMsg.classList.remove('hidden');
+                errorMsg.textContent = 'Server error. Make sure the server and Ollama are running.';
+            }
+        }
+    </script>
+</body>
+</html>
