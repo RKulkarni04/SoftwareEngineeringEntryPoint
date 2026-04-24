@@ -358,5 +358,156 @@ describe("REST API (integration)", () => {
                         });
                 });
         });
+
+        it("accepts up to four models and returns per-model replies", (done) => {
+            request
+                .post("/api/register")
+                .send({
+                    name: "Multi",
+                    email: "multi@test.edu",
+                    password: "EntryPoint_Tst_9fK2mQx!"
+                })
+                .end((err) => {
+                    if (err) return done(err);
+                    request
+                        .post("/api/login")
+                        .send({
+                            email: "multi@test.edu",
+                            password: "EntryPoint_Tst_9fK2mQx!"
+                        })
+                        .end((e2, res) => {
+                            if (e2) return done(e2);
+                            const token = res.body.token;
+                            request
+                                .post("/api/conversations")
+                                .set("Authorization", "Bearer " + token)
+                                .send({})
+                                .expect(201)
+                                .end((e3, cres) => {
+                                    if (e3) return done(e3);
+                                    request
+                                        .post(
+                                            "/api/conversations/" +
+                                                cres.body.id +
+                                                "/messages"
+                                        )
+                                        .set("Authorization", "Bearer " + token)
+                                        .send({
+                                            message: "Multi model check",
+                                            models: [
+                                                "llama3",
+                                                "mistral",
+                                                "phi3",
+                                                "qwen2.5"
+                                            ]
+                                        })
+                                        .expect(200)
+                                        .end((e4, mres) => {
+                                            if (e4) return done(e4);
+                                            expect(mres.body.models).toEqual([
+                                                "llama3",
+                                                "mistral",
+                                                "phi3",
+                                                "qwen2.5"
+                                            ]);
+                                            expect(
+                                                Object.keys(
+                                                    mres.body.replies || {}
+                                                ).length
+                                            ).toBe(4);
+                                            expect(
+                                                mres.body.replies.llama3
+                                            ).toContain("Mock assistant reply");
+                                            done();
+                                        });
+                                });
+                        });
+                });
+        });
+
+        it("returns modelOutputs in GET history for assistant messages", (done) => {
+            request
+                .post("/api/register")
+                .send({
+                    name: "Hist2",
+                    email: "hist2@test.edu",
+                    password: "EntryPoint_Tst_9fK2mQx!"
+                })
+                .end((err) => {
+                    if (err) return done(err);
+                    request
+                        .post("/api/login")
+                        .send({
+                            email: "hist2@test.edu",
+                            password: "EntryPoint_Tst_9fK2mQx!"
+                        })
+                        .end((e2, res) => {
+                            if (e2) return done(e2);
+                            const token = res.body.token;
+                            request
+                                .post("/api/conversations")
+                                .set("Authorization", "Bearer " + token)
+                                .send({})
+                                .expect(201)
+                                .end((e3, cres) => {
+                                    if (e3) return done(e3);
+                                    const cid = cres.body.id;
+                                    request
+                                        .post(
+                                            "/api/conversations/" +
+                                                cid +
+                                                "/messages"
+                                        )
+                                        .set("Authorization", "Bearer " + token)
+                                        .send({
+                                            message: "Need outputs",
+                                            models: ["llama3", "mistral"]
+                                        })
+                                        .expect(200)
+                                        .end((e4) => {
+                                            if (e4) return done(e4);
+                                            request
+                                                .get(
+                                                    "/api/conversations/" +
+                                                        cid +
+                                                        "/messages"
+                                                )
+                                                .set(
+                                                    "Authorization",
+                                                    "Bearer " + token
+                                                )
+                                                .expect(200)
+                                                .end((e5, hres) => {
+                                                    if (e5) return done(e5);
+                                                    const msgs =
+                                                        hres.body.messages || [];
+                                                    const assistant = msgs.find(
+                                                        (m) =>
+                                                            m.role ===
+                                                            "assistant"
+                                                    );
+                                                    expect(assistant).toBeDefined();
+                                                    expect(
+                                                        assistant.modelOutputs
+                                                    ).toBeDefined();
+                                                    expect(
+                                                        assistant.modelOutputs
+                                                            .llama3
+                                                    ).toContain(
+                                                        "Mock assistant reply"
+                                                    );
+                                                    expect(
+                                                        assistant.modelOutputs
+                                                            .mistral
+                                                    ).toContain(
+                                                        "Mock assistant reply"
+                                                    );
+                                                    done();
+                                                });
+                                        });
+                                });
+                        });
+                });
+        });
     });
 });

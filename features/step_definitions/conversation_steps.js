@@ -66,7 +66,14 @@ When("I send the chat message {string}", async function (message) {
             res.url().includes("/messages")
     );
     await this.page.click("#btn-send");
-    await sendPromise;
+    const res = await sendPromise;
+    try {
+        this.lastMessagesRequestBody = JSON.parse(
+            res.request().postData() || "{}"
+        );
+    } catch (e) {
+        this.lastMessagesRequestBody = {};
+    }
 });
 
 Then(
@@ -136,6 +143,54 @@ When("I search conversations for {string}", async function (query) {
     await this.page.keyboard.press("Backspace");
     await this.page.type("#search-input", query);
     await this.page.click("#btn-search");
+});
+
+When(
+    "I set chat model slots to {string}, {string}, {string}, {string}",
+    async function (m1, m2, m3, m4) {
+        await this.page.waitForSelector("#model-slot-0", { timeout: 15000 });
+        const vals = [m1, m2, m3, m4];
+        await this.page.evaluate((items) => {
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById("model-slot-" + i);
+                if (!el) continue;
+                el.value = items[i] || "";
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+        }, vals);
+    }
+);
+
+Then(
+    "the last chat request should include models {string}",
+    async function (csvModels) {
+        const expected = csvModels
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean);
+        const body = this.lastMessagesRequestBody || {};
+        if (!Array.isArray(body.models)) {
+            throw new Error("POST /messages body did not include models array");
+        }
+        if (JSON.stringify(body.models) !== JSON.stringify(expected)) {
+            throw new Error(
+                `Expected models ${JSON.stringify(expected)} but got ${JSON.stringify(body.models)}`
+            );
+        }
+    }
+);
+
+Then("I should see model view option {string}", async function (modelName) {
+    await this.page.waitForFunction(
+        (m) => {
+            const sel = document.getElementById("model-view-select");
+            if (!sel) return false;
+            const opts = Array.from(sel.options || []);
+            return opts.some((o) => o.value === m);
+        },
+        { timeout: 15000 },
+        modelName
+    );
 });
 
 Then(

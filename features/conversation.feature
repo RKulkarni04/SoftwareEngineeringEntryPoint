@@ -24,3 +24,12 @@ Feature: Conversation history and LLM chat
     When I send the chat message "How is rutgers?"
     Then I should see chat history containing "How is rutgers?"
     And I should see assistant text containing "Mock assistant"
+
+  Scenario: User sends one prompt to multiple models
+    Given I am logged in as "testuser@test.edu" with password "EntryPoint_Tst_9fK2mQx!"
+    And I open the chat page
+    When I set chat model slots to "llama3", "mistral", "", ""
+    And I send the chat message "compare models"
+    Then the last chat request should include models "llama3,mistral"
+    And I should see model view option "llama3"
+    And I should see model view option "mistral"
