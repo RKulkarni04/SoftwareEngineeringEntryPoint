@@ -275,8 +275,15 @@
     </main>
 </div>
 
+<script src="chatSidebarLogic.js"></script>
 <script>
     // ── State ──────────────────────────────────────────────────────────────
+    const {
+        createInitialSelection,
+        createSingleSelection,
+        toggleModelSelection,
+        buildInputHint
+    } = window.ChatSidebarLogic;
     let mode = 'single';           // 'single' | 'multi'
     let availableModels = [];
     let selectedModels = new Set();
@@ -314,12 +321,7 @@
 
     function updateHint() {
         const hint = document.getElementById('inputHint');
-        if (mode === 'multi') {
-            const count = selectedModels.size;
-            hint.innerHTML = `Press Enter to send · <span class="multi-hint">Comparing ${count} model${count!==1?'s':''}</span>`;
-        } else {
-            hint.innerHTML = `Press Enter to send · Your Royal Advisor awaits`;
-        }
+        hint.innerHTML = buildInputHint(mode, selectedModels.size);
     }
 
     // ── Load models from Ollama ────────────────────────────────────────────
@@ -333,11 +335,9 @@
             availableModels = ['llama3', 'mistral', 'phi3'];
         }
 
-        if (availableModels.length > 0) {
-            primaryModel = availableModels[0];
-            selectedModels.add(availableModels[0]);
-            if (availableModels[1]) selectedModels.add(availableModels[1]);
-        }
+        const initialSelection = createInitialSelection(availableModels);
+        primaryModel = initialSelection.primaryModel;
+        selectedModels = new Set(initialSelection.selectedModels);
 
         renderModelList();
         updateHint();
@@ -364,9 +364,9 @@
                     ${primaryModel === model ? '<span class="model-badge">active</span>' : ''}
                 `;
                 item.onclick = () => {
-                    primaryModel = model;
-                    selectedModels.clear();
-                    selectedModels.add(model);
+                    const singleSelection = createSingleSelection(model);
+                    primaryModel = singleSelection.primaryModel;
+                    selectedModels = new Set(singleSelection.selectedModels);
                     renderModelList();
                     updateHint();
                 };
@@ -379,15 +379,16 @@
                     <span class="model-name">${model}</span>
                 `;
                 item.onclick = (e) => {
+                    const checkbox = item.querySelector('input[type=checkbox]');
+
                     if (e.target.type !== 'checkbox') {
                         const cb = item.querySelector('input[type=checkbox]');
                         cb.checked = !cb.checked;
                     }
-                    if (item.querySelector('input').checked) {
-                        selectedModels.add(model);
-                    } else {
-                        selectedModels.delete(model);
-                    }
+
+                    selectedModels = new Set(
+                        toggleModelSelection([...selectedModels], model, checkbox.checked)
+                    );
                     item.classList.toggle('selected', selectedModels.has(model));
                     item.querySelector('.model-dot').classList.toggle('online', selectedModels.has(model));
                     updateHint();
