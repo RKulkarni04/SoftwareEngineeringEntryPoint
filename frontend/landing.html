@@ -4,183 +4,439 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EntryPoint</title>
-    <!-- Tailwind CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter font for clean modern look -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Cinzel:wght@400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .logo-text { letter-spacing: -0.5px; }
+        :root {
+            --gold: #8B6310;
+            --gold-light: #B8860B;
+            --gold-pale: #D4A843;
+            --ivory: #FAF7F0;
+            --ivory-dark: #F2EDE0;
+            --parchment: #E8DFC8;
+            --ink: #1C1612;
+            --ink-soft: #3D3025;
+            --ink-muted: #7A6A55;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'EB Garamond', Georgia, serif;
+            background-color: var(--ivory);
+            color: var(--ink);
+            min-height: 100vh;
+        }
+        .font-display { font-family: 'Cinzel', serif; }
+        .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+        /* Header */
+        .ep-header {
+            background: var(--ivory);
+            border-bottom: 1px solid var(--parchment);
+            padding: 0 2.5rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .ep-logo-mark {
+            width: 36px; height: 36px;
+            background: var(--gold);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ep-logo-mark svg { width: 18px; height: 18px; fill: var(--ivory); }
+        .ep-logo-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: 0.05em;
+            margin-left: 0.6rem;
+        }
+        .ep-nav a {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .ep-nav a:hover { color: var(--gold); }
+
+        /* Buttons */
+        .btn-gold {
+            background: var(--gold);
+            color: var(--ivory);
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-gold:hover { background: var(--gold-light); }
+        .btn-outline {
+            background: transparent;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-outline:hover { background: var(--ivory-dark); }
+        .btn-danger {
+            background: #7A2020;
+            color: var(--ivory);
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-danger:hover { background: #5C1818; }
+
+        /* Dropdown */
+        .ep-dropdown {
+            position: absolute;
+            right: 0; top: calc(100% + 8px);
+            width: 300px;
+            background: var(--ivory);
+            border: 1px solid var(--parchment);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(28,22,18,0.12);
+            padding: 1.5rem;
+            z-index: 50;
+        }
+        .ep-dropdown h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 1rem;
+        }
+        .ep-input {
+            width: 100%;
+            background: white;
+            border: 1px solid var(--parchment);
+            border-radius: 4px;
+            padding: 0.55rem 0.85rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .ep-input:focus { border-color: var(--gold); }
+        .ep-input::placeholder { color: var(--ink-muted); }
+        .divider-line {
+            display: flex; align-items: center; gap: 0.75rem; margin: 0.25rem 0;
+        }
+        .divider-line::before, .divider-line::after {
+            content: ''; flex: 1; height: 1px; background: var(--parchment);
+        }
+        .divider-text {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ink-muted);
+        }
+
+        /* Hero */
+        .ep-hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5rem 1.5rem;
+            background: var(--ivory);
+            background-image: radial-gradient(ellipse at 60% 0%, rgba(180,145,60,0.07) 0%, transparent 65%),
+                              radial-gradient(ellipse at 20% 100%, rgba(180,145,60,0.05) 0%, transparent 55%);
+        }
+        .ep-eyebrow {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            border: 1px solid var(--parchment);
+            background: white;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1.75rem;
+        }
+        .ep-hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 600;
+            line-height: 1.1;
+            text-align: center;
+            color: var(--ink);
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.01em;
+        }
+        .ep-hero h1 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+        .ep-hero p {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.15rem;
+            color: var(--ink-muted);
+            text-align: center;
+            max-width: 420px;
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Chat input strip */
+        .ep-chat-strip {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 520px;
+            background: white;
+            border: 1px solid var(--parchment);
+            border-radius: 6px;
+            padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+            box-shadow: 0 2px 12px rgba(28,22,18,0.06);
+        }
+        .ep-chat-strip input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-family: 'EB Garamond', serif;
+            font-size: 1rem;
+            color: var(--ink);
+            background: transparent;
+        }
+        .ep-chat-strip input::placeholder { color: var(--ink-muted); }
+
+        /* Feature cards */
+        .ep-card {
+            background: white;
+            border: 1px solid var(--parchment);
+            border-radius: 8px;
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+        }
+        .ep-card-icon {
+            width: 36px; height: 36px;
+            background: var(--ivory-dark);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 0.75rem;
+        }
+        .ep-card-icon svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 1.5; }
+        .ep-card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink);
+            margin-bottom: 0.4rem;
+        }
+        .ep-card p {
+            font-family: 'EB Garamond', serif;
+            font-size: 0.9rem;
+            color: var(--ink-muted);
+            line-height: 1.5;
+        }
+
+        /* Chat history list */
+        .ep-history-item {
+            padding: 0.75rem 1rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+            color: var(--ink);
+            cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem;
+            transition: background 0.15s;
+            border-bottom: 1px solid var(--ivory-dark);
+        }
+        .ep-history-item:last-child { border-bottom: none; }
+        .ep-history-item:hover { background: var(--ivory-dark); }
+        .ep-history-dot {
+            width: 6px; height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Rutgers button */
+        .btn-rutgers {
+            background: #CC0033;
+            color: white;
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+        .btn-rutgers:hover { background: #a80029; }
+
+        /* Error/success message */
+        .ep-msg-error {
+            font-family: 'EB Garamond', serif;
+            font-size: 0.9rem;
+            background: #FFF5F5;
+            color: #7A2020;
+            border: 1px solid #F5C6C6;
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        /* Section label */
+        .ep-section-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink-muted);
+            margin-bottom: 0.75rem;
+        }
     </style>
 </head>
-<body class="flex flex-col min-h-screen bg-white text-gray-800">
+<body class="flex flex-col min-h-screen">
 
     <!-- ===== NAVBAR ===== -->
-    <header class="flex items-center px-8 py-4 border-b border-gray-100 shadow-sm bg-white">
-
-        <!-- Logo and site name -->
-    <header class="flex items-center px-8 py-4 border-b border-gray-100 shadow-sm bg-white">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">EP</span>
+    <header class="ep-header">
+        <a href="landing.html" class="flex items-center" style="text-decoration:none">
+            <div class="ep-logo-mark">
+                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2L3 7v11h14V7L10 2zm0 2.2l5 3.5V17H5V7.7l5-3.5z"/></svg>
             </div>
-            <span class="text-xl font-bold logo-text text-gray-900">EntryPoint</span>
-        </div>
+            <span class="ep-logo-name">EntryPoint</span>
+        </a>
 
-        <!-- Navigation links -->
-        <nav class="flex items-center gap-6 ml-10">
-            <a href="landing.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Home</a>
-            <a href="chat.html" class="text-sm font-medium text-gray-600 hover:text-green-600 transition">Chat</a>
+        <nav class="ep-nav flex items-center gap-8 ml-10">
+            <a href="landing.html">Home</a>
+            <a href="chat.html">Study Room</a>
         </nav>
 
-        <!-- Auth area - login/logout buttons on the right -->
         <div class="relative ml-auto flex items-center gap-3">
-            <span id="welcomeText" class="hidden text-sm text-gray-500"></span>
+            <span id="welcomeText" class="hidden" style="font-family:'EB Garamond',serif;font-size:0.9rem;color:var(--ink-muted)"></span>
 
-            <!-- Login button - shown by default when user is logged out -->
-            <button id="loginBtn" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition shadow-sm">
-                Login
-            </button>
+            <button id="loginBtn" class="btn-gold">Sign In</button>
 
-            <!-- Logout button - hidden by default, only shown after successful login -->
-            <button id="logoutBtn" class="hidden px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition shadow-sm">
-                Logout
-            </button>
+            <button id="logoutBtn" class="hidden btn-danger">Sign Out</button>
 
-            <!-- Login dropdown - toggles when login button is clicked -->
-            <div class="absolute right-0 top-12 z-10 hidden w-72 p-5 bg-white rounded-xl shadow-xl border border-gray-100" id="loginDropdown">
-                <h3 class="text-base font-semibold mb-4 text-gray-800">Welcome back</h3>
+            <!-- Login dropdown -->
+            <div class="ep-dropdown hidden" id="loginDropdown">
+                <h3>Welcome Back</h3>
 
-                <!-- Error message shown if login fails -->
-                <div id="errorMsg" class="hidden text-red-500 text-xs mb-3 bg-red-50 px-3 py-2 rounded-lg"></div>
+                <div id="errorMsg" class="hidden ep-msg-error mb-4"></div>
 
                 <div class="flex flex-col gap-3">
+                    <a href="/api/auth/cas" class="btn-rutgers">Login with Rutgers NetID</a>
 
-                    <!-- Rutgers CAS Login (primary) -->
-                    <a href="/api/auth/cas"
-                       class="px-4 py-2.5 text-sm font-semibold text-center text-white bg-red-700 rounded-lg hover:bg-red-800 transition">
-                        🎓 Login with Rutgers NetID
-                    </a>
+                    <div class="divider-line"><span class="divider-text">or local account</span></div>
 
-                    <!-- Divider -->
-                    <div class="flex items-center gap-2 my-1">
-                        <div class="flex-1 h-px bg-gray-200"></div>
-                        <span class="text-xs text-gray-400">or use local account</span>
-                        <div class="flex-1 h-px bg-gray-200"></div>
-                    </div>
+                    <input type="email" id="email" placeholder="Email address" class="ep-input">
+                    <input type="password" id="password" placeholder="Password" class="ep-input">
 
-                    <!-- Email input -->
-                    <input type="email" id="email" placeholder="Email address"
-                           class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-
-                    <!-- Password input -->
-                    <input type="password" id="password" placeholder="Password"
-                           class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-
-                    <!-- 2FA input - hidden until server requests it -->
                     <div id="totpSection" class="hidden">
-                        <label class="block text-xs text-gray-500 mb-1">Two-Factor Authentication Code</label>
-                        <input type="text" id="totpToken" placeholder="6-digit code from authenticator"
-                               maxlength="6" inputmode="numeric"
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                        <label style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);display:block;margin-bottom:0.35rem;">Verification Code</label>
+                        <input type="text" id="totpToken" placeholder="6-digit authenticator code"
+                               maxlength="6" inputmode="numeric" class="ep-input">
                     </div>
 
-                    <!-- Forgot password link -->
-                    <a href="reset-password.html" class="text-xs text-green-600 hover:underline text-right -mt-1">
-                        Forgot password?
-                    </a>
+                    <a href="reset-password.html" style="font-family:'EB Garamond',serif;font-size:0.85rem;color:var(--gold);text-align:right;text-decoration:none;margin-top:-0.25rem;">Forgot password?</a>
 
-                    <!-- Local login button -->
-                    <button onclick="loginUser()" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
-                        Log In
-                    </button>
+                    <button onclick="loginUser()" class="btn-gold" style="width:100%;text-align:center;padding:0.65rem 1rem;">Log In</button>
 
-                    <!-- Divider -->
-                    <div class="flex items-center gap-2 my-1">
-                        <div class="flex-1 h-px bg-gray-200"></div>
-                        <span class="text-xs text-gray-400">new here?</span>
-                        <div class="flex-1 h-px bg-gray-200"></div>
-                    </div>
+                    <div class="divider-line"><span class="divider-text">new here?</span></div>
 
-                    <!-- Link to signup page for new users -->
-                    <a href="signup.html" class="px-4 py-2 text-sm font-medium text-center text-green-600 border border-green-500 rounded-lg hover:bg-green-50 transition">
-                        Create an account
-                    </a>
+                    <a href="signup.html" class="btn-outline" style="width:100%;text-align:center;padding:0.6rem 1rem;">Create an Account</a>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- ===== MAIN CONTENT ===== -->
-    <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-b from-white to-green-50">
+    <main class="ep-hero flex-1">
 
-        <!-- Page heading - describes the app as a teaching assistant -->
-    <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-b from-white to-green-50">
-        <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full mb-6">
-            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-            AI-Powered Learning Assistant
-        </div>
+        <div class="ep-eyebrow">Learning Assistant</div>
 
-        <h1 class="text-5xl font-bold text-center text-gray-900 mb-4 leading-tight">
-            Your Personal <br>
-            <span class="text-green-500">Teaching Assistant</span>
-        </h1>
-        <p class="text-gray-500 text-center text-base max-w-md mb-10">
-            Ask questions, get clear explanations, and understand concepts deeply — learn at your own pace.
-        </p>
+        <h1>Your Personal<br><em>Teaching Assistant</em></h1>
 
-        <!-- Chat input box - saves message to localStorage and redirects to chat.html -->
-        <div class="flex items-center gap-2 w-full max-w-lg bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3">
-            <input type="text" id="chatInput" placeholder="Ask a question to get started..."
-                   class="flex-1 text-sm text-gray-700 outline-none bg-transparent"
+        <p>Ask questions, receive clear explanations, and understand concepts deeply — study at your own pace.</p>
+
+        <div class="ep-chat-strip">
+            <input type="text" id="chatInput" placeholder="Pose a question to begin..."
                    onkeydown="if(event.key==='Enter') goToChat()">
-            <button onclick="goToChat()" class="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition">
-                Send →
-            </button>
+            <button onclick="goToChat()" class="btn-gold" style="white-space:nowrap;flex-shrink:0;">Ask &rarr;</button>
         </div>
 
         <!-- Previous chats list - hidden by default, shown after login -->
-        <div id="chatHistory" class="hidden w-full max-w-lg mt-10">
-            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Previous Chats</h2>
-            <ul id="chatList" class="bg-white border border-gray-100 rounded-xl divide-y divide-gray-100 shadow-sm">
-                <!-- Each item links to the chat page -->
-                <li class="px-4 py-3 text-sm text-gray-700 hover:bg-green-50 cursor-pointer flex items-center gap-2 transition"
-                    onclick="window.location.href='chat.html'">
-                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
-                    Chat Session 1
+        <div id="chatHistory" class="hidden w-full mt-10" style="max-width:520px">
+            <div class="ep-section-label">Recent Sessions</div>
+            <ul id="chatList" class="bg-white border rounded-lg overflow-hidden" style="border-color:var(--parchment)">
+                <li class="ep-history-item" onclick="window.location.href='chat.html'">
+                    <span class="ep-history-dot"></span>
+                    Study Session 1
                 </li>
             </ul>
         </div>
 
-        <!-- Feature cards - shown when logged out, hidden after login -->
-        <div id="featureCards" class="grid grid-cols-3 gap-4 mt-12 max-w-lg w-full">
-            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">💡</div>
-                <p class="text-xs font-medium text-gray-700">Clear explanations</p>
+        <!-- Feature cards - shown when logged out -->
+        <div id="featureCards" class="grid grid-cols-3 gap-4 mt-12 w-full" style="max-width:520px">
+            <div class="ep-card">
+                <div class="ep-card-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a7 7 0 0 1 7 7c0 3.5-2.5 6.4-5.8 7.3L13 18h-2l-.2-1.7C7.5 15.4 5 12.5 5 9a7 7 0 0 1 7-7zm0 16h0v2h0v-2z"/></svg>
+                </div>
+                <h3>Explanations</h3>
+                <p>Concepts broken down clearly and simply.</p>
             </div>
-            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">📚</div>
-                <p class="text-xs font-medium text-gray-700">Learn at your pace</p>
+            <div class="ep-card">
+                <div class="ep-card-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <h3>Always Available</h3>
+                <p>Study on your schedule, without limits.</p>
             </div>
-            <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center">
-                <div class="text-2xl mb-2">🎓</div>
-                <p class="text-xs font-medium text-gray-700">Student focused</p>
+            <div class="ep-card">
+                <div class="ep-card-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
+                <h3>Deep Learning</h3>
+                <p>Go beyond answers — understand the reasoning.</p>
             </div>
         </div>
     </main>
 
     <script>
-        // Javascript
-
-        // Get references to key elements
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const loginDropdown = document.getElementById('loginDropdown');
 
-        // On page load: handle CAS redirect token or verify existing stored token
         window.onload = function() {
-
-            // Check if Rutgers CAS redirected back with a token in the URL
             const urlParams = new URLSearchParams(window.location.search);
             const casToken = urlParams.get('token');
             const casUserId = urlParams.get('userId');
@@ -197,43 +453,33 @@
                     register_failed: 'Could not create account. Please try again.'
                 };
                 errorMsg.textContent = messages[casError] || 'Login error. Please try again.';
-                // Open login dropdown to show the error
                 loginDropdown.classList.remove('hidden');
-                // Clean the URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
             if (casToken) {
-                // CAS login successful — store token and update UI
                 localStorage.setItem('token', casToken);
                 if (casUserId) localStorage.setItem('userId', casUserId);
                 if (casName) localStorage.setItem('userName', decodeURIComponent(casName));
-                // Clean the token from URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
-            // Now check stored token (either from CAS or previous local login)
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    // Decode the JWT token and check if it has expired
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     const isExpired = payload.exp * 1000 < Date.now();
-
                     if (isExpired) {
-                        // Token expired - clear storage and keep login button visible
                         localStorage.removeItem('token');
                         localStorage.removeItem('userId');
                         localStorage.removeItem('userName');
                     } else {
-                        // Valid token - switch to logged-in state
                         loginBtn.classList.add('hidden');
                         logoutBtn.classList.remove('hidden');
                         document.getElementById('chatHistory').classList.remove('hidden');
                         document.getElementById('featureCards').classList.add('hidden');
                     }
                 } catch(e) {
-                    // Token is malformed - clear storage and reset to logged-out state
                     localStorage.removeItem('token');
                     localStorage.removeItem('userId');
                     localStorage.removeItem('userName');
@@ -241,25 +487,21 @@
             }
         };
 
-        // Toggle the login dropdown when login button is clicked
         loginBtn.addEventListener('click', function(event) {
-            event.stopPropagation(); // Prevent click from bubbling to window
+            event.stopPropagation();
             loginDropdown.classList.toggle('hidden');
         });
 
-        // Close dropdown if user clicks anywhere outside of it
         window.addEventListener('click', function() {
             if (!loginDropdown.classList.contains('hidden')) {
                 loginDropdown.classList.add('hidden');
             }
         });
 
-        // Prevent dropdown from closing when clicking inside it
         loginDropdown.addEventListener('click', function(event) {
             event.stopPropagation();
         });
 
-        // Send login credentials to backend API using fetch() instead of form POST
         async function loginUser() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -276,7 +518,6 @@
             if (totpToken) body.totp_token = totpToken;
 
             try {
-                // POST request to the login endpoint
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -286,50 +527,39 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Save JWT token and userId to localStorage for future authenticated requests
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('userId', data.userId);
-
-                    // Update UI to logged-in state
                     loginBtn.classList.add('hidden');
                     logoutBtn.classList.remove('hidden');
                     loginDropdown.classList.add('hidden');
                     document.getElementById('chatHistory').classList.remove('hidden');
                     document.getElementById('featureCards').classList.add('hidden');
                 } else if (data.requires2FA) {
-                    // Show 2FA input field
                     document.getElementById('totpSection').classList.remove('hidden');
                     errorMsg.classList.remove('hidden');
                     errorMsg.textContent = 'Please enter your 2FA code from your authenticator app.';
                 } else {
-                    // Show error message if login failed
                     errorMsg.classList.remove('hidden');
                     errorMsg.textContent = data.error || 'Login failed';
                 }
             } catch (err) {
-                // Handle network or server errors
                 errorMsg.classList.remove('hidden');
                 errorMsg.textContent = 'Server error. Please try again.';
             }
         }
 
-        // Clear stored credentials and reset UI to logged-out state
         logoutBtn.addEventListener('click', function() {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
-
-            // Swap back to logged-out state
             loginBtn.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
             document.getElementById('chatHistory').classList.add('hidden');
             document.getElementById('featureCards').classList.remove('hidden');
         });
 
-        // Save typed message to localStorage and redirect to chat page
         function goToChat() {
             const msg = document.getElementById('chatInput').value;
             if (msg.trim()) {
-                // chat.html will read this message and send it automatically
                 localStorage.setItem('firstMessage', msg);
                 window.location.href = 'chat.html';
             }

@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const SECRET = "INSERT YOUR OWN KEY";
+const SECRET = "supersecretkey";
 
 const authenticateToken = (req, res, next) => {
 
