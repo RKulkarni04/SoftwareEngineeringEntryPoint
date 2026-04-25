@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:unit && npm run test:acceptance",
+    "test:unit": "jasmine",
+    "test:acceptance": "cucumber-js features/model_sidebar.feature --require features/support/model_sidebar_hooks.js --require features/step_definitions/model_sidebar_steps.js",
     "start": "node server.js"
   },
   "keywords": [],
