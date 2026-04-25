@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Session — EntryPoint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ivory:#f5f0e8; --ivory-dark:#ede5d5; --ivory-deep:#e0d5c0;
+            --gold:#9a6b00; --gold-mid:#b87d00; --gold-bright:#c8920a;
+            --gold-pale:#f5e8c8; --ink:#1c1410; --ink-mid:#3a2e22;
+            --ink-soft:#6b5a44; --ink-muted:#9a8870; --white:#fdfaf4;
+            --border:#d4c8b0; --border-light:#e8dfc8;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'DM Sans',sans-serif; background:var(--ivory); color:var(--ink); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background:var(--white); border-bottom:1px solid var(--border);
+            height:60px; display:flex; align-items:center; padding:0 24px; gap:16px; flex-shrink:0;
+        }
+        .logo-mark {
+            width:36px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+            text-decoration:none;
+        }
+        .session-info { flex:1; min-width:0; }
+        .session-label { font-size:10px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); }
+        .session-title { font-family:'Playfair Display',serif; font-size:18px; font-style:italic; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .topbar-actions { display:flex; align-items:center; gap:8px; margin-left:auto; flex-shrink:0; }
+        .t-btn {
+            padding:6px 14px; border-radius:6px; border:1px solid var(--border);
+            background:transparent; color:var(--ink-soft); font-family:'DM Sans',sans-serif;
+            font-size:12px; cursor:pointer; transition:all 0.2s; text-decoration:none; white-space:nowrap;
+        }
+        .t-btn:hover { border-color:var(--gold); color:var(--gold); }
+        .t-btn.danger:hover { border-color:#c0392b; color:#c0392b; }
+        .menu-btn { display:none; padding:6px 10px; font-size:18px; }
+        @media(max-width:640px){ .menu-btn{display:block;} .session-title{font-size:15px;} .topbar-actions .t-btn:not(.danger){display:none;} }
+
+        /* ── LAYOUT ── */
+        .layout { display:flex; flex:1; overflow:hidden; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width:240px; background:var(--white); border-right:1px solid var(--border);
+            display:flex; flex-direction:column; flex-shrink:0; overflow:hidden;
+        }
+        @media(max-width:640px){
+            .sidebar{ position:fixed; left:0; top:60px; bottom:0; z-index:50; transform:translateX(-100%); transition:transform 0.25s; box-shadow:4px 0 20px rgba(28,20,16,0.1); }
+            .sidebar.open{ transform:translateX(0); }
+        }
+        .sidebar-section { padding:16px 16px 12px; border-bottom:1px solid var(--border-light); }
+        .sidebar-heading { font-size:10px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--ink-muted); margin-bottom:12px; }
+        .new-btn {
+            width:100%; padding:9px 14px; border-radius:7px; border:1px dashed var(--border);
+            background:transparent; color:var(--gold); font-family:'DM Sans',sans-serif;
+            font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;
+        }
+        .new-btn:hover { border-color:var(--gold); background:var(--gold-pale); }
+
+        /* ── MODEL SELECTOR ── */
+        .model-section { padding:14px 16px; border-bottom:1px solid var(--border-light); }
+        .model-mode-toggle { display:flex; gap:6px; margin-bottom:12px; }
+        .mode-btn {
+            flex:1; padding:7px 6px; border-radius:6px; border:1px solid var(--border);
+            background:transparent; color:var(--ink-muted); font-family:'DM Sans',sans-serif;
+            font-size:11px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:center;
+        }
+        .mode-btn.active { background:var(--gold); color:var(--ivory); border-color:var(--gold); }
+        .model-list { display:flex; flex-direction:column; gap:6px; }
+        .model-item {
+            display:flex; align-items:center; gap:8px;
+            padding:8px 10px; border-radius:7px; border:1px solid var(--border-light);
+            background:var(--ivory); cursor:pointer; transition:all 0.15s;
+            font-size:12px; color:var(--ink-soft);
+        }
+        .model-item:hover { border-color:var(--gold); color:var(--ink); }
+        .model-item.selected { border-color:var(--gold); background:var(--gold-pale); color:var(--ink); }
+        .model-item input[type="checkbox"] { accent-color:var(--gold); width:14px; height:14px; flex-shrink:0; }
+        .model-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+        .model-dot.online { background:#4caf50; }
+        .model-name { font-weight:500; flex:1; }
+        .model-badge { font-size:10px; color:var(--ink-muted); background:var(--ivory-dark); padding:1px 6px; border-radius:4px; }
+        .model-loading { font-size:12px; color:var(--ink-muted); font-style:italic; padding:4px 0; }
+        .multi-info { font-size:11px; color:var(--gold); background:var(--gold-pale); border-radius:6px; padding:6px 8px; margin-top:8px; display:none; line-height:1.4; }
+        .multi-info.show { display:block; }
+
+        /* Sidebar history */
+        .sidebar-list { flex:1; overflow-y:auto; padding:8px 10px; }
+        .s-item { padding:10px 12px; border-radius:7px; font-size:13px; color:var(--ink-soft); cursor:pointer; transition:background 0.15s, color 0.15s; display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+        .s-item:hover { background:var(--gold-pale); color:var(--ink); }
+        .s-item.active { background:var(--gold-pale); color:var(--gold); font-weight:500; }
+        .s-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); flex-shrink:0; }
+        .s-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .sidebar-footer { padding:14px 16px; border-top:1px solid var(--border-light); }
+        .user-card { display:flex; align-items:center; gap:10px; }
+        .user-avatar { width:34px; height:34px; border-radius:7px; background:var(--ivory-dark); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:var(--ink-soft); flex-shrink:0; }
+        .user-name { font-size:13px; font-weight:500; color:var(--ink); }
+        .user-rank { font-size:10px; color:var(--gold); font-weight:500; letter-spacing:0.5px; }
+
+        /* ── CHAT MAIN ── */
+        .chat-main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .messages { flex:1; overflow-y:auto; padding:28px 28px; display:flex; flex-direction:column; gap:24px; scroll-behavior:smooth; }
+        .messages::-webkit-scrollbar{ width:5px; }
+        .messages::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
+        @media(max-width:640px){ .messages{ padding:16px; } }
+
+        /* Empty state */
+        .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; padding:40px; text-align:center; }
+        .empty-crest { font-size:36px; margin-bottom:14px; opacity:0.5; }
+        .empty-title { font-family:'Playfair Display',serif; font-style:italic; font-size:22px; color:var(--ink); margin-bottom:8px; }
+        .empty-sub { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; color:var(--ink-muted); max-width:320px; line-height:1.7; }
+
+        /* ── SINGLE MESSAGE BUBBLES ── */
+        .msg-row { display:flex; flex-direction:column; gap:5px; max-width:660px; }
+        .msg-row.user { align-self:flex-end; align-items:flex-end; }
+        .msg-row.ai { align-self:flex-start; align-items:flex-start; }
+        .msg-meta { font-size:10px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--ink-muted); padding:0 4px; }
+        .bubble { padding:14px 20px; border-radius:12px; font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.75; max-width:520px; word-break:break-word; }
+        .bubble.user { background:var(--gold); color:var(--ivory); border-bottom-right-radius:4px; font-style:italic; }
+        .bubble.ai { background:var(--white); color:var(--ink); border:1px solid var(--border); border-bottom-left-radius:4px; }
+        .bubble.loading { background:var(--white); border:1px solid var(--border); border-bottom-left-radius:4px; display:flex; align-items:center; gap:10px; color:var(--ink-muted); font-style:italic; }
+        .spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .msg-actions { display:flex; gap:6px; padding:0 4px; opacity:0; transition:opacity 0.15s; }
+        .msg-row:hover .msg-actions { opacity:1; }
+        .action-btn { font-size:11px; color:var(--ink-muted); background:none; border:none; cursor:pointer; padding:2px 8px; border-radius:4px; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+        .action-btn:hover { background:var(--gold-pale); color:var(--gold); }
+
+        /* ── MULTI-MODEL RESPONSE BLOCK ── */
+        .multi-block { width:100%; max-width:900px; align-self:flex-start; }
+        .multi-question {
+            font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px;
+            color:var(--ink-muted); margin-bottom:14px; padding-left:4px;
+            border-left:3px solid var(--gold); padding-left:12px;
+        }
+        .multi-grid { display:grid; gap:14px; }
+        .multi-grid.cols-1 { grid-template-columns:1fr; }
+        .multi-grid.cols-2 { grid-template-columns:1fr 1fr; }
+        .multi-grid.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+        @media(max-width:700px){ .multi-grid.cols-2, .multi-grid.cols-3 { grid-template-columns:1fr; } }
+        .model-card {
+            background:var(--white); border:1px solid var(--border); border-radius:12px;
+            overflow:hidden; transition:border-color 0.2s;
+        }
+        .model-card:hover { border-color:var(--gold); }
+        .model-card.error { border-color:#e0b0a0; }
+        .model-card-header {
+            padding:10px 16px; background:var(--ivory-dark); border-bottom:1px solid var(--border-light);
+            display:flex; align-items:center; justify-content:space-between; gap:8px;
+        }
+        .model-card-name { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--ink); letter-spacing:0.3px; }
+        .model-card-tag { font-size:10px; color:var(--gold); background:var(--gold-pale); padding:2px 8px; border-radius:4px; font-weight:500; }
+        .model-card-tag.err { color:#b94040; background:#fde8e8; }
+        .model-card-body { padding:16px; }
+        .model-card-text { font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.75; color:var(--ink); }
+        .model-card-actions { padding:8px 16px 12px; display:flex; gap:8px; opacity:0; transition:opacity 0.15s; }
+        .model-card:hover .model-card-actions { opacity:1; }
+        .model-spinner { display:flex; align-items:center; gap:10px; padding:16px; color:var(--ink-muted); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; }
+
+        /* ── SEARCH ── */
+        .search-bar { padding:8px 20px; border-top:1px solid var(--border); background:var(--white); display:flex; gap:8px; flex-shrink:0; }
+        .search-bar input { flex:1; padding:8px 14px; border:1px solid var(--border-light); border-radius:7px; background:var(--ivory); color:var(--ink); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; }
+        .search-bar input:focus { border-color:var(--gold); }
+        .search-bar input::placeholder { color:var(--ink-muted); }
+
+        /* ── INPUT AREA ── */
+        .input-area { padding:14px 20px 18px; border-top:1px solid var(--border); background:var(--white); flex-shrink:0; }
+        .input-row { display:flex; align-items:center; background:var(--ivory); border:1.5px solid var(--border); border-radius:10px; padding:6px 6px 6px 18px; transition:border-color 0.2s, box-shadow 0.2s; }
+        .input-row:focus-within { border-color:var(--gold); box-shadow:0 2px 14px rgba(154,107,0,0.08); }
+        .input-row input { flex:1; background:transparent; border:none; outline:none; font-family:'Cormorant Garamond',serif; font-size:17px; font-style:italic; color:var(--ink); }
+        .input-row input::placeholder { color:var(--ink-muted); }
+        .send-btn { background:var(--gold); color:var(--ivory); border:none; border-radius:7px; padding:9px 18px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .send-btn:hover { background:var(--gold-mid); }
+        .input-hint { font-size:11px; color:var(--ink-muted); text-align:center; margin-top:8px; font-family:'Cormorant Garamond',serif; font-style:italic; }
+        .multi-hint { color:var(--gold); font-weight:500; }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <button class="t-btn menu-btn" onclick="toggleSidebar()">☰</button>
+    <a href="landing.html" class="logo-mark">
+        <svg width="36" height="36" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><rect width="44" height="44" rx="10" fill="#1c1410"/><line x1="14" y1="32" x2="30" y2="12" stroke="#9a6b00" stroke-width="3.5" stroke-linecap="round"/><polyline points="22,12 30,12 30,20" fill="none" stroke="#9a6b00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="32" x2="21" y2="32" stroke="#f5f0e8" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/><line x1="14" y1="32" x2="14" y2="25" stroke="#f5f0e8" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/></svg>
+    </a>
+    <div class="session-info">
+        <div class="session-label">★ Mastery Session</div>
+        <div class="session-title" id="sessionTitle">The Great Library</div>
+    </div>
+    <div class="topbar-actions">
+        <a href="landing.html" class="t-btn">Home</a>
+        <a href="chat.html" class="t-btn">New Session</a>
+        <a href="profile.html" class="t-btn">Merit & Rank</a>
+        <button class="t-btn danger" onclick="logout()">Depart</button>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- New session -->
+        <div class="sidebar-section">
+            <div class="sidebar-heading">Session</div>
+            <button class="new-btn" onclick="newSession()">+ Begin New Session</button>
+        </div>
+
+        <!-- Model selector -->
+        <div class="model-section">
+            <div class="sidebar-heading">Models</div>
+
+            <!-- Single / Multi toggle -->
+            <div class="model-mode-toggle">
+                <button class="mode-btn active" id="btnSingle" onclick="setMode('single')">Single</button>
+                <button class="mode-btn" id="btnMulti" onclick="setMode('multi')">Compare</button>
+            </div>
+
+            <!-- Model list (populated from Ollama) -->
+            <div class="model-list" id="modelList">
+                <div class="model-loading">Loading models…</div>
+            </div>
+
+            <div class="multi-info" id="multiInfo">
+                ✦ Compare mode — your question will be sent to all selected models simultaneously.
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="sidebar-list">
+            <div class="sidebar-heading" style="padding:4px 2px 8px;">Archives</div>
+            <div class="s-item active"><span class="s-dot"></span><span class="s-text">Current session</span></div>
+            <div id="sidebarList"></div>
+        </div>
+
+        <!-- User footer -->
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar" id="sidebarAvatar">?</div>
+                <div>
+                    <div class="user-name" id="sidebarName">Scholar</div>
+                    <div class="user-rank">Grand Aspirant</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <div id="overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(28,20,16,0.35);z-index:40;"></div>
+
+    <!-- CHAT MAIN -->
+    <main class="chat-main">
+        <div class="messages" id="messages">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-crest">✦</div>
+                <div class="empty-title">What shall we master today?</div>
+                <div class="empty-sub">Choose a model — or select multiple to compare answers side by side.</div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search your archives…">
+            <button class="t-btn" onclick="searchMessages()" style="font-size:12px;padding:8px 14px;">Search</button>
+        </div>
+
+        <div class="input-area">
+            <div class="input-row">
+                <input type="text" id="chatInput" placeholder="Seek wisdom…" onkeydown="if(event.key==='Enter')sendMessage()">
+                <button class="send-btn" onclick="sendMessage()">Inquire →</button>
+            </div>
+            <p class="input-hint" id="inputHint">Press Enter to send · Your Royal Advisor awaits</p>
+        </div>
+    </main>
+</div>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────────
+    let mode = 'single';           // 'single' | 'multi'
+    let availableModels = [];
+    let selectedModels = new Set();
+    let primaryModel = null;
+
+    // ── Sidebar toggle ─────────────────────────────────────────────────────
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').style.display =
+            document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+    }
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').style.display = 'none';
+    }
+
+    // ── Session title ──────────────────────────────────────────────────────
+    const TITLES = ['The Great Library','Studies in Reason','The Scholar\'s Pursuit','Chambers of Knowledge','The Inquiry Hall'];
+    document.getElementById('sessionTitle').textContent = TITLES[Math.floor(Math.random()*TITLES.length)];
+
+    // ── User info ──────────────────────────────────────────────────────────
+    const uName = localStorage.getItem('userName') || 'Scholar';
+    document.getElementById('sidebarName').textContent = uName;
+    document.getElementById('sidebarAvatar').textContent = uName.charAt(0).toUpperCase();
+
+    // ── Mode toggle ────────────────────────────────────────────────────────
+    function setMode(m) {
+        mode = m;
+        document.getElementById('btnSingle').classList.toggle('active', m === 'single');
+        document.getElementById('btnMulti').classList.toggle('active', m === 'multi');
+        document.getElementById('multiInfo').classList.toggle('show', m === 'multi');
+        renderModelList();
+        updateHint();
+    }
+
+    function updateHint() {
+        const hint = document.getElementById('inputHint');
+        if (mode === 'multi') {
+            const count = selectedModels.size;
+            hint.innerHTML = `Press Enter to send · <span class="multi-hint">Comparing ${count} model${count!==1?'s':''}</span>`;
+        } else {
+            hint.innerHTML = `Press Enter to send · Your Royal Advisor awaits`;
+        }
+    }
+
+    // ── Load models from Ollama ────────────────────────────────────────────
+    async function loadModels() {
+        const token = localStorage.getItem('token');
+        try {
+            const r = await fetch('/api/models', { headers:{'Authorization':`Bearer ${token}`} });
+            const d = await r.json();
+            availableModels = d.models || [];
+        } catch {
+            availableModels = ['llama3', 'mistral', 'phi3'];
+        }
+
+        if (availableModels.length > 0) {
+            primaryModel = availableModels[0];
+            selectedModels.add(availableModels[0]);
+            if (availableModels[1]) selectedModels.add(availableModels[1]);
+        }
+
+        renderModelList();
+        updateHint();
+    }
+
+    function renderModelList() {
+        const list = document.getElementById('modelList');
+        if (availableModels.length === 0) {
+            list.innerHTML = '<div class="model-loading">No models found. Make sure Ollama is running.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        availableModels.forEach(model => {
+            const item = document.createElement('div');
+            item.className = 'model-item' + (selectedModels.has(model) ? ' selected' : '');
+            item.dataset.model = model;
+
+            if (mode === 'single') {
+                // Radio-style: clicking selects only this one
+                item.innerHTML = `
+                    <span class="model-dot ${selectedModels.has(model) && primaryModel===model ? 'online' : ''}"></span>
+                    <span class="model-name">${model}</span>
+                    ${primaryModel === model ? '<span class="model-badge">active</span>' : ''}
+                `;
+                item.onclick = () => {
+                    primaryModel = model;
+                    selectedModels.clear();
+                    selectedModels.add(model);
+                    renderModelList();
+                    updateHint();
+                };
+            } else {
+                // Checkbox-style: multiple can be selected
+                const checked = selectedModels.has(model) ? 'checked' : '';
+                item.innerHTML = `
+                    <input type="checkbox" ${checked} onclick="event.stopPropagation()">
+                    <span class="model-dot ${selectedModels.has(model) ? 'online' : ''}"></span>
+                    <span class="model-name">${model}</span>
+                `;
+                item.onclick = (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        const cb = item.querySelector('input[type=checkbox]');
+                        cb.checked = !cb.checked;
+                    }
+                    if (item.querySelector('input').checked) {
+                        selectedModels.add(model);
+                    } else {
+                        selectedModels.delete(model);
+                    }
+                    item.classList.toggle('selected', selectedModels.has(model));
+                    item.querySelector('.model-dot').classList.toggle('online', selectedModels.has(model));
+                    updateHint();
+                };
+            }
+            list.appendChild(item);
+        });
+    }
+
+    // ── Formatting ─────────────────────────────────────────────────────────
+    function formatTime(d) { return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+
+    // ── Add single message bubble ──────────────────────────────────────────
+    function addMessage(text, isUser, isSpinner = false) {
+        const container = document.getElementById('messages');
+        document.getElementById('emptyState')?.remove();
+
+        const row = document.createElement('div');
+        row.className = `msg-row ${isUser ? 'user' : 'ai'}`;
+
+        const meta = document.createElement('div');
+        meta.className = 'msg-meta';
+        meta.textContent = isUser ? `Aspirant · ${formatTime(new Date())}` : `Royal Advisor · ${formatTime(new Date())}`;
+        row.appendChild(meta);
+
+        const bubble = document.createElement('div');
+        if (isSpinner) {
+            bubble.className = 'bubble loading';
+            bubble.innerHTML = '<div class="spinner"></div><span>Consulting the archives…</span>';
+        } else {
+            bubble.className = `bubble ${isUser ? 'user' : 'ai'}`;
+            bubble.textContent = text;
+        }
+        row.appendChild(bubble);
+
+        if (!isUser && !isSpinner) {
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn';
+            copyBtn.textContent = '📋 Copy';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(text).then(() => {
+                    copyBtn.textContent = '✅ Copied';
+                    setTimeout(() => copyBtn.textContent = '📋 Copy', 1500);
+                });
+            };
+            actions.appendChild(copyBtn);
+            row.appendChild(actions);
+        }
+
+        container.appendChild(row);
+        container.scrollTop = container.scrollHeight;
+        return row;
+    }
+
+    // ── Add multi-model response block ─────────────────────────────────────
+    function addMultiBlock(question, models) {
+        const container = document.getElementById('messages');
+        document.getElementById('emptyState')?.remove();
+
+        const block = document.createElement('div');
+        block.className = 'multi-block';
+
+        // Show the user's question
+        const q = document.createElement('div');
+        q.className = 'multi-question';
+        q.textContent = `"${question}"`;
+        block.appendChild(q);
+
+        const colClass = models.length === 1 ? 'cols-1' : models.length === 2 ? 'cols-2' : 'cols-3';
+        const grid = document.createElement('div');
+        grid.className = `multi-grid ${colClass}`;
+
+        // Create a card per model (with spinner initially)
+        const cards = {};
+        models.forEach(model => {
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            card.innerHTML = `
+                <div class="model-card-header">
+                    <span class="model-card-name">${model}</span>
+                    <span class="model-card-tag" id="tag-${model}">thinking…</span>
+                </div>
+                <div class="model-spinner" id="spinner-${model}">
+                    <div class="spinner"></div><span>Consulting…</span>
+                </div>
+                <div class="model-card-body" id="body-${model}" style="display:none;">
+                    <div class="model-card-text" id="text-${model}"></div>
+                </div>
+                <div class="model-card-actions" id="actions-${model}" style="display:none;">
+                    <button class="action-btn" onclick="copyModelResponse('${model}')">📋 Copy</button>
+                </div>
+            `;
+            grid.appendChild(card);
+            cards[model] = card;
+        });
+
+        block.appendChild(grid);
+        container.appendChild(block);
+        container.scrollTop = container.scrollHeight;
+        return cards;
+    }
+
+    function fillModelCard(model, reply, isError) {
+        const spinner = document.getElementById(`spinner-${model}`);
+        const body = document.getElementById(`body-${model}`);
+        const text = document.getElementById(`text-${model}`);
+        const tag = document.getElementById(`tag-${model}`);
+        const actions = document.getElementById(`actions-${model}`);
+        const card = spinner?.closest('.model-card');
+
+        if (spinner) spinner.style.display = 'none';
+        if (body) { body.style.display = 'block'; text.textContent = reply; }
+        if (tag) {
+            tag.textContent = isError ? 'error' : 'done';
+            tag.className = `model-card-tag${isError ? ' err' : ''}`;
+        }
+        if (card && isError) card.classList.add('error');
+        if (actions) actions.style.display = 'flex';
+
+        // Store reply text for copy
+        if (actions) actions.dataset.reply = reply;
+    }
+
+    window._modelReplies = {};
+    function copyModelResponse(model) {
+        const text = document.getElementById(`text-${model}`)?.textContent;
+        if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector(`#actions-${model} .action-btn`);
+                if (btn) { btn.textContent = '✅ Copied'; setTimeout(() => btn.textContent = '📋 Copy', 1500); }
+            });
+        }
+    }
+
+    // ── SEND MESSAGE ───────────────────────────────────────────────────────
+    async function sendMessage(override) {
+        const input = document.getElementById('chatInput');
+        const text = override || input.value.trim();
+        if (!text) return;
+        input.value = '';
+
+        const token = localStorage.getItem('token');
+
+        if (mode === 'single') {
+            // ── Single model ──────────────────────────────────────────────
+            addMessage(text, true);
+            const spinner = addMessage('', false, true);
+            try {
+                const r = await fetch('/api/chat', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                    body:JSON.stringify({ message:text, model: primaryModel || availableModels[0] || 'llama3' })
+                });
+                const d = await r.json();
+                spinner.remove();
+                addMessage(d.reply || 'No response', false);
+            } catch {
+                spinner.remove();
+                addMessage('Could not reach the server. Please try again.', false);
+            }
+
+        } else {
+            // ── Multi model ───────────────────────────────────────────────
+            if (selectedModels.size === 0) {
+                addMessage('Please select at least one model from the sidebar.', false);
+                return;
+            }
+
+            const models = [...selectedModels];
+            addMultiBlock(text, models);
+
+            try {
+                const r = await fetch('/api/chat/multi', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                    body:JSON.stringify({ message:text, models })
+                });
+                const d = await r.json();
+
+                d.results.forEach(({ model, reply, error }) => {
+                    fillModelCard(model, reply, error);
+                });
+
+            } catch (err) {
+                models.forEach(model => {
+                    fillModelCard(model, 'Server error. Please try again.', true);
+                });
+            }
+
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+    }
+
+    // ── Load conversation history ──────────────────────────────────────────
+    async function loadHistory() {
+        const userId = localStorage.getItem('userId');
+        const token = localStorage.getItem('token');
+        if (!userId || !token) return;
+        try {
+            const r = await fetch(`/api/conversations/${userId}`, { headers:{'Authorization':`Bearer ${token}`} });
+            const d = await r.json();
+            const list = document.getElementById('sidebarList');
+            d.conversations?.slice(0,8).forEach(c => {
+                const item = document.createElement('div');
+                item.className = 's-item';
+                item.innerHTML = `<span class="s-text">${c.message.replace(/^\[.*?\] /,'').substring(0,26)}…</span>`;
+                item.title = c.message;
+                list.appendChild(item);
+            });
+        } catch {}
+    }
+
+    // ── Search ─────────────────────────────────────────────────────────────
+    async function searchMessages() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) return;
+        const token = localStorage.getItem('token');
+        try {
+            const r = await fetch(`/api/conversations/search?query=${encodeURIComponent(query)}`, { headers:{'Authorization':`Bearer ${token}`} });
+            const d = await r.json();
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            if (d.results?.length) {
+                d.results.forEach(c => { addMessage(c.message, true); addMessage(c.reply, false); });
+            } else {
+                container.innerHTML = '<div style="text-align:center;color:var(--ink-muted);padding:40px;font-family:Cormorant Garamond,serif;font-style:italic;font-size:16px;">No records found in the archives.</div>';
+            }
+        } catch {}
+    }
+
+    function logout() { localStorage.clear(); window.location.href = 'landing.html'; }
+
+    // ── New Session: clears UI and reloads page fresh ─────────────────────
+    function newSession() {
+        // Reload the page — backend history is per-user in DB,
+        // but the UI starts fresh and Ollama gets a clean thread
+        // because we only send the last 10 DB messages as context.
+        // A true new session just means starting a new page load.
+        window.location.href = 'chat.html';
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    window.onload = function() {
+        loadModels();
+        loadHistory();
+        const first = localStorage.getItem('firstMessage');
+        if (first) { localStorage.removeItem('firstMessage'); sendMessage(first); }
+    };
+</script>
+</body>
+</html>
