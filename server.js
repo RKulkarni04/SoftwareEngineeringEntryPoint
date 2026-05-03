@@ -2,33 +2,37 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-// Connect to the database
+// Database
 require("./database");
 
-// Import API routes
+// Routes
 const authRoutes = require("./routes/authRoutes");
+const llmRoutes  = require("./routes/llm");
 
-// Create app
 const app = express();
 
-// Middleware
+// ── Core middleware ────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend files
+// ── Static: uploaded files ─────────────────────────────────────────────────────
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ── API routes (must come before catch-all static) ────────────────────────────
+app.use("/api", authRoutes);   // auth: /api/login, /api/register, etc.
+app.use("/api", llmRoutes);    // LLM:  /api/llm/chat, /api/llm/models, /api/weather
+
+// ── Static: frontend (catch-all — keep last) ──────────────────────────────────
 app.use(express.static(path.join(__dirname, "frontend")));
 
-// API routes
-app.use("/api", authRoutes);
-
-// Root route
+// ── Root route ─────────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "frontend", "landing.html"));
+  res.sendFile(path.join(__dirname, "frontend", "landing.html"));
 });
 
-// Start server
-const PORT = 3000;
-
+// ── Start ──────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Chat UI → http://localhost:${PORT}/chat.html`);
 });
