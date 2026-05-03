@@ -8,6 +8,9 @@
 //   GEMINI_API_KEY      — for Gemini
 
 const { readFileForContext } = require("../middleware/upload");
+const db = require("../database");
+const { appendMasteryPrompt, extractMasteryFromReply } = require("../utils/mastery");
+const { verifyUserOwnsChat, setChatMasteryScore } = require("../utils/chatMastery");
 
 // ─── Subject system prompts ───────────────────────────────────────────────────
 const SUBJECT_PROMPTS = {
@@ -149,10 +152,18 @@ function detectProvider(model) {
  */
 async function chat(req, res) {
   try {
-    const { message, subject, provider: explicitProvider, model, weatherCtx } = req.body;
+    const { message, subject, provider: explicitProvider, model, weatherCtx, chatId: chatIdRaw } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({ error: "message is required" });
+    }
+
+    const userId = req.user?.id;
+    let chatId;
+    try {
+      chatId = await verifyUserOwnsChat(chatIdRaw, userId);
+    } catch {
+      return res.status(400).json({ error: "chatId is required and must refer to a chat you own" });
     }
 
     // Build subject system prompt
@@ -170,6 +181,7 @@ async function chat(req, res) {
       const fileContent = readFileForContext(req.file.path, req.file.mimetype);
       userMessage = `[Attached file: ${req.file.originalname}]\n\`\`\`\n${fileContent}\n\`\`\`\n\n${userMessage}`;
     }
+    const userMessageForModel = appendMasteryPrompt(userMessage);
 
     // Resolve provider
     const providerKey = explicitProvider || detectProvider(model);
@@ -194,10 +206,19 @@ async function chat(req, res) {
       });
     }
 
-    const reply = await providerFn({ systemPrompt, userMessage, model });
+    const rawReply = await providerFn({ systemPrompt, userMessage: userMessageForModel, model });
+    const { reply, score } = extractMasteryFromReply(rawReply);
+
+    db.run(
+      "INSERT INTO conversations (user_id, message, reply, created_at, chat_id) VALUES (?, ?, ?, datetime('now'), ?)",
+      [userId, message.trim(), reply, chatId]
+    );
+    setChatMasteryScore(chatId, userId, score);
+    db.run("UPDATE chat_sessions SET updated_at = datetime('now') WHERE id = ? AND user_id = ?", [chatId, userId]);
 
     return res.json({
       reply,
+      mastery: score,
       provider: providerKey,
       model: model || null,
       subject: subjectKey,

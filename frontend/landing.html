@@ -282,26 +282,6 @@
             flex-shrink: 0;
         }
 
-        /* Rutgers button */
-        .btn-rutgers {
-            background: #CC0033;
-            color: white;
-            font-family: 'Cinzel', serif;
-            font-size: 0.65rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            border: none;
-            border-radius: 4px;
-            padding: 0.6rem 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-            width: 100%;
-        }
-        .btn-rutgers:hover { background: #a80029; }
-
         /* Error/success message */
         .ep-msg-error {
             font-family: 'EB Garamond', serif;
@@ -354,10 +334,6 @@
                 <div id="errorMsg" class="hidden ep-msg-error mb-4"></div>
 
                 <div class="flex flex-col gap-3">
-                    <a href="/api/auth/cas" class="btn-rutgers">Login with Rutgers NetID</a>
-
-                    <div class="divider-line"><span class="divider-text">or local account</span></div>
-
                     <input type="email" id="email" placeholder="Email address" class="ep-input">
                     <input type="password" id="password" placeholder="Password" class="ep-input">
 
@@ -438,29 +414,16 @@
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const casToken = urlParams.get('token');
-            const casUserId = urlParams.get('userId');
-            const casName = urlParams.get('name');
-            const casError = urlParams.get('error');
-
-            if (casError) {
+            const errCode = urlParams.get('error');
+            if (errCode) {
                 const errorMsg = document.getElementById('errorMsg');
                 errorMsg.classList.remove('hidden');
                 const messages = {
-                    cas_failed: 'Rutgers login failed. Please try again.',
-                    no_ticket: 'No authentication ticket received from Rutgers.',
                     db_error: 'Database error during login.',
                     register_failed: 'Could not create account. Please try again.'
                 };
-                errorMsg.textContent = messages[casError] || 'Login error. Please try again.';
+                errorMsg.textContent = messages[errCode] || 'Login error. Please try again.';
                 loginDropdown.classList.remove('hidden');
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            if (casToken) {
-                localStorage.setItem('token', casToken);
-                if (casUserId) localStorage.setItem('userId', casUserId);
-                if (casName) localStorage.setItem('userName', decodeURIComponent(casName));
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
@@ -560,6 +523,7 @@
         function goToChat() {
             const msg = document.getElementById('chatInput').value;
             if (msg.trim()) {
+                sessionStorage.removeItem('currentChatId');
                 localStorage.setItem('firstMessage', msg);
                 window.location.href = 'chat.html';
             }

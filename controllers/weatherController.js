@@ -67,6 +67,7 @@ async function getWeather(req, res) {
 
     // Structured data for frontend
     const weather = {
+      code: c.weather_code,
       temperature: Math.round(c.temperature_2m),
       feelsLike: Math.round(c.apparent_temperature),
       humidity: c.relative_humidity_2m,

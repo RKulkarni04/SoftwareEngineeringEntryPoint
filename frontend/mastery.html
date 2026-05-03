@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery — EntryPoint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700&family=Cormorant+Garamond:ital@0;1&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ivory:#f5f0e8; --gold:#9a6b00; --gold-bright:#c8920a; --gold-pale:#f5e8c8;
+            --ink:#1c1410; --ink-muted:#9a8870; --white:#fdfaf4; --border:#d4c8b0;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'DM Sans',sans-serif; background:var(--ivory); color:var(--ink); min-height:100vh; }
+        header {
+            background:var(--white); border-bottom:1px solid var(--border);
+            height:56px; display:flex; align-items:center; padding:0 22px; gap:14px;
+        }
+        header a {
+            font-size:12px; color:var(--ink-muted); text-decoration:none; border:1px solid var(--border);
+            padding:6px 12px; border-radius:6px;
+        }
+        header a:hover { border-color:var(--gold); color:var(--gold); }
+        h1 {
+            font-family:'Playfair Display',serif; font-size:22px; font-style:italic; flex:1;
+        }
+        main { max-width:520px; margin:0 auto; padding:28px 20px 48px; }
+        .lead {
+            font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic;
+            color:var(--ink-muted); margin-bottom:28px; line-height:1.6;
+        }
+        .row { margin-bottom:22px; }
+        .label {
+            display:flex; justify-content:space-between; align-items:baseline;
+            margin-bottom:7px; font-size:12px; font-weight:500;
+        }
+        .label span:first-child { letter-spacing:0.04em; color:var(--ink); font-family:'Playfair Display',serif; font-style:italic; }
+        .label span:last-child { font-size:11px; color:var(--gold); }
+        .bar-wrap {
+            height:10px; background:var(--white); border:1px solid var(--border);
+            border-radius:5px; overflow:hidden;
+        }
+        .bar-fill {
+            height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-bright));
+            border-radius:4px; width:0%; transition:width 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="chat.html">← Study session</a>
+        <h1>Mastery by chat</h1>
+    </header>
+    <main>
+        <p class="lead">Each bar is one named study chat. Scores update when you exchange messages in that chat.</p>
+        <div id="rows"></div>
+    </main>
+    <script>
+        window.onload = async function() {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            if (!token || !userId) {
+                window.location.href = 'landing.html';
+                return;
+            }
+            const wrap = document.getElementById('rows');
+            let chats = [];
+            try {
+                const r = await fetch('/api/mastery/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.status === 401 || r.status === 403) {
+                    window.location.href = 'landing.html';
+                    return;
+                }
+                if (r.ok) {
+                    const d = await r.json();
+                    chats = d.chats || [];
+                }
+            } catch {}
+
+            if (!chats.length) {
+                const p = document.createElement('p');
+                p.className = 'lead';
+                p.textContent = 'No chats yet. Start a session from the study room.';
+                wrap.appendChild(p);
+                return;
+            }
+
+            chats.forEach(function(ch) {
+                const v = ch.mastery_score;
+                const pct = v != null && !Number.isNaN(v) ? Math.min(100, Math.max(0, v)) : 0;
+                const row = document.createElement('div');
+                row.className = 'row';
+                const lab = document.createElement('div');
+                lab.className = 'label';
+                const name = document.createElement('span');
+                name.textContent = ch.title || ('Chat ' + ch.id);
+                const val = document.createElement('span');
+                val.textContent = (v != null && !Number.isNaN(v)) ? (pct + '/100') : '—';
+                lab.appendChild(name);
+                lab.appendChild(val);
+                const bw = document.createElement('div');
+                bw.className = 'bar-wrap';
+                const bf = document.createElement('div');
+                bf.className = 'bar-fill';
+                bf.style.width = pct + '%';
+                bw.appendChild(bf);
+                row.appendChild(lab);
+                row.appendChild(bw);
+                wrap.appendChild(row);
+            });
+        };
+    </script>
+</body>
+</html>

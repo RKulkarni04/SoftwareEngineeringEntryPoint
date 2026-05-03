@@ -12,12 +12,13 @@ const router = express.Router();
 const { chat, listModels } = require("../controllers/llmController");
 const { getWeather } = require("../controllers/weatherController");
 const { upload } = require("../middleware/upload");
+const authenticateToken = require("../middleware/authMiddleware");
 
 // LLM routes
-router.get("/llm/models", listModels);
+router.get("/llm/models", authenticateToken, listModels);
 
 // Accept an optional single file upload named "file"
-router.post("/llm/chat", upload.single("file"), chat);
+router.post("/llm/chat", authenticateToken, upload.single("file"), chat);
 
 // Weather route
 router.get("/weather", getWeather);

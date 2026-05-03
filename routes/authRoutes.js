@@ -10,7 +10,9 @@ const {
   multiModelChat,
   getModels,
   getConversations,
-  searchConversations
+  searchConversations,
+  getMastery,
+  createChat
 } = require("../controllers/authController");
 
 const authenticateToken = require("../middleware/authMiddleware");
@@ -24,10 +26,12 @@ router.get("/progress/:id", authenticateToken, getProgress);
 router.get("/activity/:id", authenticateToken, getActivity);
 
 // Chat routes
+router.post("/chats", authenticateToken, createChat);
 router.post("/chat", authenticateToken, chatMessage);
 router.post("/chat/multi", authenticateToken, multiModelChat);
 router.get("/models", authenticateToken, getModels);
-router.get("/conversations/:id", authenticateToken, getConversations);
 router.get("/conversations/search", authenticateToken, searchConversations);
+router.get("/conversations/:id", authenticateToken, getConversations);
+router.get("/mastery/:id", authenticateToken, getMastery);
 
 module.exports = router;
