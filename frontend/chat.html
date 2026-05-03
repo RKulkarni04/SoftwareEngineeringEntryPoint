@@ -13,6 +13,7 @@
             --gold-pale:#f5e8c8; --ink:#1c1410; --ink-mid:#3a2e22;
             --ink-soft:#6b5a44; --ink-muted:#9a8870; --white:#fdfaf4;
             --border:#d4c8b0; --border-light:#e8dfc8;
+            --success:#4a7c59; --danger:#a83232;
         }
         * { box-sizing:border-box; margin:0; padding:0; }
         body { font-family:'DM Sans',sans-serif; background:var(--ivory); color:var(--ink); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
@@ -22,10 +23,7 @@
             background:var(--white); border-bottom:1px solid var(--border);
             height:60px; display:flex; align-items:center; padding:0 24px; gap:16px; flex-shrink:0;
         }
-        .logo-mark {
-            width:36px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
-            text-decoration:none;
-        }
+        .logo-mark { width:36px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0; text-decoration:none; }
         .session-info { flex:1; min-width:0; }
         .session-label { font-size:10px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); }
         .session-title { font-family:'Playfair Display',serif; font-size:18px; font-style:italic; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -36,16 +34,36 @@
             font-size:12px; cursor:pointer; transition:all 0.2s; text-decoration:none; white-space:nowrap;
         }
         .t-btn:hover { border-color:var(--gold); color:var(--gold); }
-        .t-btn.danger:hover { border-color:#c0392b; color:#c0392b; }
+        .t-btn.danger:hover { border-color:var(--danger); color:var(--danger); }
         .menu-btn { display:none; padding:6px 10px; font-size:18px; }
         @media(max-width:640px){ .menu-btn{display:block;} .session-title{font-size:15px;} .topbar-actions .t-btn:not(.danger){display:none;} }
+
+        /* ── WEATHER BANNER ── */
+        .weather-banner {
+            background:var(--ivory-dark); border-bottom:1px solid var(--border);
+            padding:8px 24px; display:none; align-items:center; gap:14px;
+            flex-shrink:0; font-size:12px; color:var(--ink-soft);
+        }
+        .weather-banner.visible { display:flex; }
+        .weather-icon { font-size:1.3rem; }
+        .weather-details { flex:1; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+        .weather-temp { font-family:'Playfair Display',serif; font-size:16px; font-style:italic; color:var(--ink); }
+        .weather-desc { color:var(--ink-muted); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px; }
+        .weather-stats { font-size:11px; color:var(--ink-muted); display:flex; gap:10px; }
+        .weather-badge {
+            font-size:10px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
+            color:var(--gold); background:var(--gold-pale); border:1px solid var(--border);
+            padding:3px 10px; border-radius:4px; flex-shrink:0;
+        }
+        .weather-dismiss { background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:14px; padding:2px 4px; }
+        .weather-dismiss:hover { color:var(--ink); }
 
         /* ── LAYOUT ── */
         .layout { display:flex; flex:1; overflow:hidden; }
 
         /* ── SIDEBAR ── */
         .sidebar {
-            width:240px; background:var(--white); border-right:1px solid var(--border);
+            width:260px; background:var(--white); border-right:1px solid var(--border);
             display:flex; flex-direction:column; flex-shrink:0; overflow:hidden;
         }
         @media(max-width:640px){
@@ -61,8 +79,19 @@
         }
         .new-btn:hover { border-color:var(--gold); background:var(--gold-pale); }
 
+        /* ── SUBJECT SELECTOR ── */
+        .subject-section { padding:14px 16px; border-bottom:1px solid var(--border-light); }
+        .subject-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+        .subj-btn {
+            padding:7px 8px; border-radius:6px; border:1px solid var(--border-light);
+            background:var(--ivory); color:var(--ink-muted); font-family:'DM Sans',sans-serif;
+            font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s; text-align:center;
+        }
+        .subj-btn:hover { border-color:var(--gold); color:var(--ink); background:var(--gold-pale); }
+        .subj-btn.active { background:var(--gold); color:var(--ivory); border-color:var(--gold); }
+
         /* ── MODEL SELECTOR ── */
-        .model-section { padding:14px 16px; border-bottom:1px solid var(--border-light); }
+        .model-section { padding:14px 16px; border-bottom:1px solid var(--border-light); overflow-y:auto; max-height:240px; }
         .model-mode-toggle { display:flex; gap:6px; margin-bottom:12px; }
         .mode-btn {
             flex:1; padding:7px 6px; border-radius:6px; border:1px solid var(--border);
@@ -70,7 +99,7 @@
             font-size:11px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:center;
         }
         .mode-btn.active { background:var(--gold); color:var(--ivory); border-color:var(--gold); }
-        .model-list { display:flex; flex-direction:column; gap:6px; }
+        .model-list { display:flex; flex-direction:column; gap:5px; }
         .model-item {
             display:flex; align-items:center; gap:8px;
             padding:8px 10px; border-radius:7px; border:1px solid var(--border-light);
@@ -79,14 +108,32 @@
         }
         .model-item:hover { border-color:var(--gold); color:var(--ink); }
         .model-item.selected { border-color:var(--gold); background:var(--gold-pale); color:var(--ink); }
+        .model-item.unconfigured { opacity:0.55; }
         .model-item input[type="checkbox"] { accent-color:var(--gold); width:14px; height:14px; flex-shrink:0; }
         .model-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
-        .model-dot.online { background:#4caf50; }
-        .model-name { font-weight:500; flex:1; }
-        .model-badge { font-size:10px; color:var(--ink-muted); background:var(--ivory-dark); padding:1px 6px; border-radius:4px; }
+        .model-dot.online { background:var(--success); }
+        .model-dot.cloud { background:var(--gold-bright); }
+        .model-name { font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .model-badge { font-size:10px; color:var(--ink-muted); background:var(--ivory-dark); padding:1px 6px; border-radius:4px; flex-shrink:0; }
+        .model-badge.active { color:var(--gold); background:var(--gold-pale); }
+        .model-badge.cloud { color:var(--gold-bright); background:#fef3d6; }
+        .model-badge.err { color:var(--danger); background:#fde8e8; }
         .model-loading { font-size:12px; color:var(--ink-muted); font-style:italic; padding:4px 0; }
         .multi-info { font-size:11px; color:var(--gold); background:var(--gold-pale); border-radius:6px; padding:6px 8px; margin-top:8px; display:none; line-height:1.4; }
         .multi-info.show { display:block; }
+
+        /* ── WEATHER TOGGLE ── */
+        .weather-toggle-btn {
+            width:100%; margin-top:8px; padding:8px 12px; border-radius:7px;
+            border:1px solid var(--border-light); background:var(--ivory);
+            color:var(--ink-muted); font-family:'DM Sans',sans-serif; font-size:11px;
+            font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;
+            display:flex; align-items:center; gap:8px;
+        }
+        .weather-toggle-btn:hover { border-color:var(--gold); color:var(--ink); background:var(--gold-pale); }
+        .weather-toggle-btn.active { border-color:var(--gold); background:var(--gold-pale); color:var(--gold); }
+        .weather-status-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; transition:background 0.2s; }
+        .weather-status-dot.on { background:var(--success); }
 
         /* Sidebar history */
         .sidebar-list { flex:1; overflow-y:auto; padding:8px 10px; }
@@ -103,7 +150,7 @@
 
         /* ── CHAT MAIN ── */
         .chat-main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-        .messages { flex:1; overflow-y:auto; padding:28px 28px; display:flex; flex-direction:column; gap:24px; scroll-behavior:smooth; }
+        .messages { flex:1; overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:24px; scroll-behavior:smooth; }
         .messages::-webkit-scrollbar{ width:5px; }
         .messages::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
         @media(max-width:640px){ .messages{ padding:16px; } }
@@ -112,14 +159,21 @@
         .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; padding:40px; text-align:center; }
         .empty-crest { font-size:36px; margin-bottom:14px; opacity:0.5; }
         .empty-title { font-family:'Playfair Display',serif; font-style:italic; font-size:22px; color:var(--ink); margin-bottom:8px; }
-        .empty-sub { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; color:var(--ink-muted); max-width:320px; line-height:1.7; }
+        .empty-sub { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; color:var(--ink-muted); max-width:360px; line-height:1.7; }
+        .empty-chips { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:18px; max-width:440px; }
+        .chip {
+            padding:7px 14px; border-radius:20px; border:1px solid var(--border);
+            background:var(--white); color:var(--ink-muted); font-family:'Cormorant Garamond',serif;
+            font-style:italic; font-size:14px; cursor:pointer; transition:all 0.2s;
+        }
+        .chip:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-pale); }
 
         /* ── SINGLE MESSAGE BUBBLES ── */
         .msg-row { display:flex; flex-direction:column; gap:5px; max-width:660px; }
         .msg-row.user { align-self:flex-end; align-items:flex-end; }
         .msg-row.ai { align-self:flex-start; align-items:flex-start; }
         .msg-meta { font-size:10px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--ink-muted); padding:0 4px; }
-        .bubble { padding:14px 20px; border-radius:12px; font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.75; max-width:520px; word-break:break-word; }
+        .bubble { padding:14px 20px; border-radius:12px; font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.75; max-width:520px; word-break:break-word; white-space:pre-wrap; }
         .bubble.user { background:var(--gold); color:var(--ivory); border-bottom-right-radius:4px; font-style:italic; }
         .bubble.ai { background:var(--white); color:var(--ink); border:1px solid var(--border); border-bottom-left-radius:4px; }
         .bubble.loading { background:var(--white); border:1px solid var(--border); border-bottom-left-radius:4px; display:flex; align-items:center; gap:10px; color:var(--ink-muted); font-style:italic; }
@@ -130,11 +184,21 @@
         .action-btn { font-size:11px; color:var(--ink-muted); background:none; border:none; cursor:pointer; padding:2px 8px; border-radius:4px; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
         .action-btn:hover { background:var(--gold-pale); color:var(--gold); }
 
+        /* File attachment tag on bubble */
+        .file-tag {
+            display:inline-flex; align-items:center; gap:5px;
+            background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3);
+            border-radius:5px; padding:3px 9px; font-size:11px;
+            font-family:'DM Sans',sans-serif; font-style:normal; margin-bottom:8px;
+            font-weight:500; letter-spacing:0.3px;
+        }
+        .bubble.ai .file-tag { background:var(--ivory-dark); border-color:var(--border); color:var(--ink-muted); }
+
         /* ── MULTI-MODEL RESPONSE BLOCK ── */
         .multi-block { width:100%; max-width:900px; align-self:flex-start; }
         .multi-question {
             font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px;
-            color:var(--ink-muted); margin-bottom:14px; padding-left:4px;
+            color:var(--ink-muted); margin-bottom:14px;
             border-left:3px solid var(--gold); padding-left:12px;
         }
         .multi-grid { display:grid; gap:14px; }
@@ -142,10 +206,7 @@
         .multi-grid.cols-2 { grid-template-columns:1fr 1fr; }
         .multi-grid.cols-3 { grid-template-columns:1fr 1fr 1fr; }
         @media(max-width:700px){ .multi-grid.cols-2, .multi-grid.cols-3 { grid-template-columns:1fr; } }
-        .model-card {
-            background:var(--white); border:1px solid var(--border); border-radius:12px;
-            overflow:hidden; transition:border-color 0.2s;
-        }
+        .model-card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:border-color 0.2s; }
         .model-card:hover { border-color:var(--gold); }
         .model-card.error { border-color:#e0b0a0; }
         .model-card-header {
@@ -154,9 +215,9 @@
         }
         .model-card-name { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--ink); letter-spacing:0.3px; }
         .model-card-tag { font-size:10px; color:var(--gold); background:var(--gold-pale); padding:2px 8px; border-radius:4px; font-weight:500; }
-        .model-card-tag.err { color:#b94040; background:#fde8e8; }
+        .model-card-tag.err { color:var(--danger); background:#fde8e8; }
         .model-card-body { padding:16px; }
-        .model-card-text { font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.75; color:var(--ink); }
+        .model-card-text { font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.75; color:var(--ink); white-space:pre-wrap; }
         .model-card-actions { padding:8px 16px 12px; display:flex; gap:8px; opacity:0; transition:opacity 0.15s; }
         .model-card:hover .model-card-actions { opacity:1; }
         .model-spinner { display:flex; align-items:center; gap:10px; padding:16px; color:var(--ink-muted); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; }
@@ -168,15 +229,57 @@
         .search-bar input::placeholder { color:var(--ink-muted); }
 
         /* ── INPUT AREA ── */
-        .input-area { padding:14px 20px 18px; border-top:1px solid var(--border); background:var(--white); flex-shrink:0; }
-        .input-row { display:flex; align-items:center; background:var(--ivory); border:1.5px solid var(--border); border-radius:10px; padding:6px 6px 6px 18px; transition:border-color 0.2s, box-shadow 0.2s; }
+        .input-area { padding:10px 20px 16px; border-top:1px solid var(--border); background:var(--white); flex-shrink:0; }
+
+        /* File preview strip */
+        .file-preview {
+            display:none; align-items:center; gap:8px;
+            background:var(--ivory-dark); border:1px solid var(--border-light);
+            border-radius:7px; padding:7px 12px; margin-bottom:8px;
+            font-size:12px; color:var(--ink-soft);
+        }
+        .file-preview.visible { display:flex; }
+        .file-preview-icon { font-size:1rem; }
+        .file-preview-name { flex:1; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .file-preview-size { font-size:11px; color:var(--ink-muted); }
+        .file-remove { background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:14px; padding:0 4px; transition:color 0.15s; }
+        .file-remove:hover { color:var(--danger); }
+
+        .input-row { display:flex; align-items:center; background:var(--ivory); border:1.5px solid var(--border); border-radius:10px; padding:6px 6px 6px 6px; transition:border-color 0.2s, box-shadow 0.2s; gap:6px; }
         .input-row:focus-within { border-color:var(--gold); box-shadow:0 2px 14px rgba(154,107,0,0.08); }
-        .input-row input { flex:1; background:transparent; border:none; outline:none; font-family:'Cormorant Garamond',serif; font-size:17px; font-style:italic; color:var(--ink); }
-        .input-row input::placeholder { color:var(--ink-muted); }
-        .send-btn { background:var(--gold); color:var(--ivory); border:none; border-radius:7px; padding:9px 18px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+
+        /* Attach button */
+        .attach-btn {
+            width:34px; height:34px; border-radius:7px; border:1px solid var(--border-light);
+            background:var(--white); color:var(--ink-muted); font-size:15px;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; transition:all 0.15s; flex-shrink:0;
+        }
+        .attach-btn:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-pale); }
+        .attach-btn.has-file { border-color:var(--gold); color:var(--gold); background:var(--gold-pale); }
+
+        .input-row input[type="text"] { flex:1; background:transparent; border:none; outline:none; font-family:'Cormorant Garamond',serif; font-size:17px; font-style:italic; color:var(--ink); padding:0 6px; }
+        .input-row input[type="text"]::placeholder { color:var(--ink-muted); }
+        #fileInput { display:none; }
+
+        .send-btn { background:var(--gold); color:var(--ivory); border:none; border-radius:7px; padding:9px 18px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
         .send-btn:hover { background:var(--gold-mid); }
-        .input-hint { font-size:11px; color:var(--ink-muted); text-align:center; margin-top:8px; font-family:'Cormorant Garamond',serif; font-style:italic; }
-        .multi-hint { color:var(--gold); font-weight:500; }
+        .send-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        .input-hint { font-size:11px; color:var(--ink-muted); text-align:center; margin-top:7px; font-family:'Cormorant Garamond',serif; font-style:italic; }
+        .multi-hint { color:var(--gold); }
+        .subject-hint { color:var(--ink-soft); }
+
+        /* ── TOAST ── */
+        #toast {
+            position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+            background:var(--ivory-dark); border:1px solid var(--border);
+            color:var(--ink-soft); padding:9px 18px; border-radius:8px;
+            font-size:12px; display:none; z-index:200; box-shadow:0 4px 20px rgba(28,20,16,0.12);
+            font-family:'DM Sans',sans-serif; white-space:nowrap;
+        }
+        #toast.show { display:block; }
+        #toast.err { border-color:#e0b0a0; color:var(--danger); }
     </style>
 </head>
 <body>
@@ -194,10 +297,22 @@
     <div class="topbar-actions">
         <a href="landing.html" class="t-btn">Home</a>
         <a href="chat.html" class="t-btn">New Session</a>
-        <a href="profile.html" class="t-btn">Merit & Rank</a>
+        <a href="profile.html" class="t-btn">Merit &amp; Rank</a>
         <button class="t-btn danger" onclick="logout()">Depart</button>
     </div>
 </header>
+
+<!-- WEATHER BANNER -->
+<div class="weather-banner" id="weatherBanner">
+    <span class="weather-icon" id="weatherIcon">🌤️</span>
+    <div class="weather-details">
+        <span class="weather-temp" id="weatherTemp">—</span>
+        <span class="weather-desc" id="weatherDesc">—</span>
+        <span class="weather-stats" id="weatherStats"></span>
+    </div>
+    <span class="weather-badge">Weather context active</span>
+    <button class="weather-dismiss" onclick="dismissWeather()" title="Dismiss">✕</button>
+</div>
 
 <div class="layout">
 
@@ -210,23 +325,37 @@
             <button class="new-btn" onclick="newSession()">+ Begin New Session</button>
         </div>
 
+        <!-- Subject selector -->
+        <div class="subject-section">
+            <div class="sidebar-heading">Discipline</div>
+            <div class="subject-grid" id="subjectGrid">
+                <button class="subj-btn active" data-subj="general" onclick="setSubject(this)">General</button>
+                <button class="subj-btn" data-subj="math" onclick="setSubject(this)">Mathematics</button>
+                <button class="subj-btn" data-subj="science" onclick="setSubject(this)">Science</button>
+                <button class="subj-btn" data-subj="history" onclick="setSubject(this)">History</button>
+                <button class="subj-btn" data-subj="english" onclick="setSubject(this)">Literature</button>
+                <button class="subj-btn" data-subj="cs" onclick="setSubject(this)">Computing</button>
+            </div>
+
+            <!-- Weather toggle lives here, adjacent to discipline -->
+            <button class="weather-toggle-btn" id="weatherToggleBtn" onclick="toggleWeather()">
+                <span class="weather-status-dot" id="weatherDot"></span>
+                🌦️ &nbsp;Weather context
+            </button>
+        </div>
+
         <!-- Model selector -->
         <div class="model-section">
             <div class="sidebar-heading">Models</div>
-
-            <!-- Single / Multi toggle -->
             <div class="model-mode-toggle">
                 <button class="mode-btn active" id="btnSingle" onclick="setMode('single')">Single</button>
                 <button class="mode-btn" id="btnMulti" onclick="setMode('multi')">Compare</button>
             </div>
-
-            <!-- Model list (populated from Ollama) -->
             <div class="model-list" id="modelList">
                 <div class="model-loading">Loading models…</div>
             </div>
-
             <div class="multi-info" id="multiInfo">
-                ✦ Compare mode — your question will be sent to all selected models simultaneously.
+                ✦ Compare mode — your question is sent to all selected models simultaneously.
             </div>
         </div>
 
@@ -256,388 +385,711 @@
             <div class="empty-state" id="emptyState">
                 <div class="empty-crest">✦</div>
                 <div class="empty-title">What shall we master today?</div>
-                <div class="empty-sub">Choose a model — or select multiple to compare answers side by side.</div>
+                <div class="empty-sub">Choose a discipline and model — or select multiple to compare answers side by side. Attach a file to provide context.</div>
+                <div class="empty-chips">
+                    <span class="chip" onclick="setPrompt('Explain Newton\'s laws of motion')">Newton's laws</span>
+                    <span class="chip" onclick="setPrompt('Solve: 2x² + 5x − 3 = 0')">Quadratic equation</span>
+                    <span class="chip" onclick="setPrompt('What caused World War I?')">WWI causes</span>
+                    <span class="chip" onclick="setPrompt('Review my code for bugs')">Code review</span>
+                    <span class="chip" onclick="setPrompt('Summarise the attached document')">Summarise file</span>
+                </div>
             </div>
         </div>
 
+        <!-- Search -->
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Search your archives…">
             <button class="t-btn" onclick="searchMessages()" style="font-size:12px;padding:8px 14px;">Search</button>
         </div>
 
+        <!-- Input -->
         <div class="input-area">
+            <!-- File preview strip -->
+            <div class="file-preview" id="filePreview">
+                <span class="file-preview-icon" id="fileIcon">📄</span>
+                <span class="file-preview-name" id="fileName">file.txt</span>
+                <span class="file-preview-size" id="fileSize"></span>
+                <button class="file-remove" onclick="clearFile()" title="Remove">✕</button>
+            </div>
+
             <div class="input-row">
+                <!-- Hidden file input -->
+                <input type="file" id="fileInput"
+                    accept=".txt,.md,.csv,.json,.pdf,.jpg,.jpeg,.png,.webp,.gif"
+                    onchange="onFileSelected(this)">
+                <!-- Attach button -->
+                <button class="attach-btn" id="attachBtn" onclick="document.getElementById('fileInput').click()" title="Attach file">📎</button>
+                <!-- Text input -->
                 <input type="text" id="chatInput" placeholder="Seek wisdom…" onkeydown="if(event.key==='Enter')sendMessage()">
-                <button class="send-btn" onclick="sendMessage()">Inquire →</button>
+                <!-- Send -->
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Inquire →</button>
             </div>
             <p class="input-hint" id="inputHint">Press Enter to send · Your Royal Advisor awaits</p>
         </div>
     </main>
 </div>
 
+<div id="toast"></div>
+
 <script>
-    // ── State ──────────────────────────────────────────────────────────────
-    let mode = 'single';           // 'single' | 'multi'
-    let availableModels = [];
-    let selectedModels = new Set();
-    let primaryModel = null;
+// ── State ──────────────────────────────────────────────────────────────────────
+let mode          = 'single';
+let currentSubject = 'general';
+let availableModels = [];    // [{label, model, provider, configured}]
+let selectedModels  = new Set();
+let primaryModel    = null;
+let weatherActive   = false;
+let weatherCtx      = '';
+let selectedFile    = null;
+let isSending       = false;
 
-    // ── Sidebar toggle ─────────────────────────────────────────────────────
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('overlay').style.display =
-            document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').style.display =
+        document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').style.display = 'none';
+}
+
+// ── Session title ──────────────────────────────────────────────────────────────
+const TITLES = ['The Great Library','Studies in Reason','The Scholar\'s Pursuit','Chambers of Knowledge','The Inquiry Hall'];
+document.getElementById('sessionTitle').textContent = TITLES[Math.floor(Math.random()*TITLES.length)];
+
+// ── User info ──────────────────────────────────────────────────────────────────
+const uName = localStorage.getItem('userName') || 'Scholar';
+document.getElementById('sidebarName').textContent = uName;
+document.getElementById('sidebarAvatar').textContent = uName.charAt(0).toUpperCase();
+
+// ── Subject ────────────────────────────────────────────────────────────────────
+function setSubject(btn) {
+    document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSubject = btn.dataset.subj;
+    updateHint();
+}
+
+// ── Mode toggle ────────────────────────────────────────────────────────────────
+function setMode(m) {
+    mode = m;
+    document.getElementById('btnSingle').classList.toggle('active', m === 'single');
+    document.getElementById('btnMulti').classList.toggle('active', m === 'multi');
+    document.getElementById('multiInfo').classList.toggle('show', m === 'multi');
+    renderModelList();
+    updateHint();
+}
+
+function updateHint() {
+    const hint = document.getElementById('inputHint');
+    const parts = [];
+    if (mode === 'multi') {
+        const count = selectedModels.size;
+        parts.push(`<span class="multi-hint">Comparing ${count} model${count!==1?'s':''}</span>`);
     }
-    function closeSidebar() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('overlay').style.display = 'none';
+    if (currentSubject !== 'general') {
+        const labels = {math:'Mathematics',science:'Science',history:'History',english:'Literature',cs:'Computing'};
+        parts.push(`<span class="subject-hint">${labels[currentSubject]||currentSubject} tutor</span>`);
     }
+    if (weatherActive) parts.push('<span class="subject-hint">🌦 Weather aware</span>');
+    hint.innerHTML = parts.length ? `Press Enter to send · ${parts.join(' · ')}` : 'Press Enter to send · Your Royal Advisor awaits';
+}
 
-    // ── Session title ──────────────────────────────────────────────────────
-    const TITLES = ['The Great Library','Studies in Reason','The Scholar\'s Pursuit','Chambers of Knowledge','The Inquiry Hall'];
-    document.getElementById('sessionTitle').textContent = TITLES[Math.floor(Math.random()*TITLES.length)];
+// ── Load models from server ────────────────────────────────────────────────────
 
-    // ── User info ──────────────────────────────────────────────────────────
-    const uName = localStorage.getItem('userName') || 'Scholar';
-    document.getElementById('sidebarName').textContent = uName;
-    document.getElementById('sidebarAvatar').textContent = uName.charAt(0).toUpperCase();
-
-    // ── Mode toggle ────────────────────────────────────────────────────────
-    function setMode(m) {
-        mode = m;
-        document.getElementById('btnSingle').classList.toggle('active', m === 'single');
-        document.getElementById('btnMulti').classList.toggle('active', m === 'multi');
-        document.getElementById('multiInfo').classList.toggle('show', m === 'multi');
-        renderModelList();
-        updateHint();
+// Normalize any model entry into {label, model, provider, configured}.
+// Handles both the new unified shape AND the old Ollama string array.
+function normalizeModel(m) {
+    if (typeof m === 'string') {
+        return { label: m, model: m, provider: 'ollama', configured: true };
     }
+    // Already an object — fill in any missing fields
+    return {
+        label:      m.label      || m.model || m.name || '(unknown)',
+        model:      m.model      || m.name  || '',
+        provider:   m.provider   || 'ollama',
+        configured: m.configured !== undefined ? m.configured : true,
+    };
+}
 
-    function updateHint() {
-        const hint = document.getElementById('inputHint');
-        if (mode === 'multi') {
-            const count = selectedModels.size;
-            hint.innerHTML = `Press Enter to send · <span class="multi-hint">Comparing ${count} model${count!==1?'s':''}</span>`;
-        } else {
-            hint.innerHTML = `Press Enter to send · Your Royal Advisor awaits`;
+async function loadModels() {
+    const token = localStorage.getItem('token');
+    let raw = [];
+
+    try {
+        // 1️⃣  Try the new unified endpoint (/api/llm/models)
+        const r1 = await fetch('/api/llm/models', { headers:{'Authorization':`Bearer ${token}`} });
+        if (r1.ok) {
+            const d1 = await r1.json();
+            raw = d1.models || [];
         }
+    } catch { /* endpoint not yet present */ }
+
+    // 2️⃣  Always also load real Ollama models (/api/models) and merge them in
+    try {
+        const r2 = await fetch('/api/models', { headers:{'Authorization':`Bearer ${token}`} });
+        if (r2.ok) {
+            const d2 = await r2.json();
+            const ollamaModels = (d2.models || []).map(m =>
+                typeof m === 'string'
+                    ? { label: m, model: m, provider: 'ollama', configured: true }
+                    : normalizeModel(m)
+            );
+            // Merge: add Ollama models not already in raw (avoid duplicates)
+            const existingIds = new Set(raw.map(m => (typeof m === 'string' ? m : m.model)));
+            ollamaModels.forEach(m => {
+                if (!existingIds.has(m.model)) raw.push(m);
+            });
+        }
+    } catch { /* Ollama offline */ }
+
+    // 3️⃣  Normalize everything
+    availableModels = raw.map(normalizeModel).filter(m => m.model);
+
+    // 4️⃣  Fallback if still empty
+    if (!availableModels.length) {
+        availableModels = [
+            { label:'llama3 (local)',  model:'llama3',  provider:'ollama', configured:true },
+            { label:'mistral (local)', model:'mistral', provider:'ollama', configured:true },
+        ];
     }
 
-    // ── Load models from Ollama ────────────────────────────────────────────
-    async function loadModels() {
-        const token = localStorage.getItem('token');
-        try {
-            const r = await fetch('/api/models', { headers:{'Authorization':`Bearer ${token}`} });
-            const d = await r.json();
-            availableModels = d.models || [];
-        } catch {
-            availableModels = ['llama3', 'mistral', 'phi3'];
-        }
-
-        if (availableModels.length > 0) {
-            primaryModel = availableModels[0];
-            selectedModels.add(availableModels[0]);
-            if (availableModels[1]) selectedModels.add(availableModels[1]);
-        }
-
-        renderModelList();
-        updateHint();
+    // Default selection: first configured model (prefer ollama since keys may be missing)
+    const firstOllama = availableModels.find(m => m.provider === 'ollama');
+    const first       = firstOllama || availableModels.find(m => m.configured) || availableModels[0];
+    if (first) {
+        primaryModel = first.model;
+        selectedModels.add(first.model);
+        const second = availableModels.find(m => m.provider === 'ollama' && m.model !== first.model);
+        if (second) selectedModels.add(second.model);
     }
 
-    function renderModelList() {
-        const list = document.getElementById('modelList');
-        if (availableModels.length === 0) {
-            list.innerHTML = '<div class="model-loading">No models found. Make sure Ollama is running.</div>';
-            return;
-        }
+    renderModelList();
+    updateHint();
+}
 
-        list.innerHTML = '';
-        availableModels.forEach(model => {
+function renderModelList() {
+    const list = document.getElementById('modelList');
+    if (!availableModels.length) {
+        list.innerHTML = '<div class="model-loading">No models found. Make sure Ollama is running or API keys are set.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+
+    // Group by provider for cleaner rendering
+    const PROVIDER_ORDER = ['claude','gemini','openai','ollama'];
+    const grouped = {};
+    availableModels.forEach(m => { (grouped[m.provider] = grouped[m.provider]||[]).push(m); });
+
+    const providerLabel = { claude:'Anthropic', gemini:'Google', openai:'OpenAI', ollama:'Local (Ollama)' };
+    const dotClass = { claude:'cloud', gemini:'cloud', openai:'cloud', ollama:'online' };
+
+    PROVIDER_ORDER.forEach(provider => {
+        const models = grouped[provider];
+        if (!models) return;
+
+        // Provider divider
+        const divider = document.createElement('div');
+        divider.style.cssText = 'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-muted);padding:8px 2px 4px;font-weight:500;';
+        divider.textContent = providerLabel[provider] || provider;
+        list.appendChild(divider);
+
+        models.forEach(m => {
+            const isSelected = selectedModels.has(m.model);
             const item = document.createElement('div');
-            item.className = 'model-item' + (selectedModels.has(model) ? ' selected' : '');
-            item.dataset.model = model;
+            item.className = `model-item${isSelected?' selected':''}${!m.configured?' unconfigured':''}`;
+            item.dataset.model = m.model;
+            item.dataset.provider = provider;
 
             if (mode === 'single') {
-                // Radio-style: clicking selects only this one
+                const isActive = primaryModel === m.model;
                 item.innerHTML = `
-                    <span class="model-dot ${selectedModels.has(model) && primaryModel===model ? 'online' : ''}"></span>
-                    <span class="model-name">${model}</span>
-                    ${primaryModel === model ? '<span class="model-badge">active</span>' : ''}
+                    <span class="model-dot ${isActive ? dotClass[provider]||'online' : ''}"></span>
+                    <span class="model-name" title="${m.label}">${m.label}</span>
+                    ${isActive ? '<span class="model-badge active">active</span>' :
+                      !m.configured ? '<span class="model-badge err">key needed</span>' :
+                      provider!=='ollama' ? `<span class="model-badge cloud">${provider}</span>` : ''}
                 `;
                 item.onclick = () => {
-                    primaryModel = model;
+                    primaryModel = m.model;
                     selectedModels.clear();
-                    selectedModels.add(model);
+                    selectedModels.add(m.model);
                     renderModelList();
                     updateHint();
                 };
             } else {
-                // Checkbox-style: multiple can be selected
-                const checked = selectedModels.has(model) ? 'checked' : '';
+                const checked = selectedModels.has(m.model);
                 item.innerHTML = `
-                    <input type="checkbox" ${checked} onclick="event.stopPropagation()">
-                    <span class="model-dot ${selectedModels.has(model) ? 'online' : ''}"></span>
-                    <span class="model-name">${model}</span>
+                    <input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation()">
+                    <span class="model-dot ${checked ? dotClass[provider]||'online' : ''}"></span>
+                    <span class="model-name" title="${m.label}">${m.label}</span>
+                    ${!m.configured ? '<span class="model-badge err">key needed</span>' :
+                      provider!=='ollama' ? `<span class="model-badge cloud">${provider}</span>` : ''}
                 `;
                 item.onclick = (e) => {
-                    if (e.target.type !== 'checkbox') {
-                        const cb = item.querySelector('input[type=checkbox]');
-                        cb.checked = !cb.checked;
-                    }
-                    if (item.querySelector('input').checked) {
-                        selectedModels.add(model);
-                    } else {
-                        selectedModels.delete(model);
-                    }
-                    item.classList.toggle('selected', selectedModels.has(model));
-                    item.querySelector('.model-dot').classList.toggle('online', selectedModels.has(model));
+                    const cb = item.querySelector('input[type=checkbox]');
+                    if (e.target.type !== 'checkbox') cb.checked = !cb.checked;
+                    if (cb.checked) selectedModels.add(m.model);
+                    else selectedModels.delete(m.model);
+                    item.classList.toggle('selected', cb.checked);
+                    item.querySelector('.model-dot').classList.toggle(dotClass[provider]||'online', cb.checked);
                     updateHint();
                 };
             }
             list.appendChild(item);
         });
+    });
+}
+
+// ── Weather ────────────────────────────────────────────────────────────────────
+const WMO_EMOJI = {
+    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+    51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
+    71:'❄️',73:'❄️',75:'❄️',77:'🌨️',
+    80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'🌨️',
+    95:'⛈️',96:'⛈️',99:'⛈️'
+};
+
+async function toggleWeather() {
+    if (weatherActive) {
+        weatherActive = false;
+        weatherCtx = '';
+        document.getElementById('weatherToggleBtn').classList.remove('active');
+        document.getElementById('weatherDot').classList.remove('on');
+        document.getElementById('weatherBanner').classList.remove('visible');
+        updateHint();
+        return;
     }
 
-    // ── Formatting ─────────────────────────────────────────────────────────
-    function formatTime(d) { return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+    if (!navigator.geolocation) {
+        showToast('Geolocation not supported by this browser.', true);
+        return;
+    }
 
-    // ── Add single message bubble ──────────────────────────────────────────
-    function addMessage(text, isUser, isSpinner = false) {
-        const container = document.getElementById('messages');
-        document.getElementById('emptyState')?.remove();
+    showToast('Requesting location…');
+    navigator.geolocation.getCurrentPosition(async pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        // Use fahrenheit if in the Americas (rough heuristic)
+        const units = lon < -30 && lon > -170 ? 'fahrenheit' : 'celsius';
+        try {
+            const r = await fetch(`/api/weather?lat=${lat}&lon=${lon}&units=${units}`);
+            const d = await r.json();
+            if (d.error) throw new Error(d.error);
 
-        const row = document.createElement('div');
-        row.className = `msg-row ${isUser ? 'user' : 'ai'}`;
+            const w = d.weather;
+            weatherCtx = d.weatherCtx;
+            weatherActive = true;
 
-        const meta = document.createElement('div');
-        meta.className = 'msg-meta';
-        meta.textContent = isUser ? `Aspirant · ${formatTime(new Date())}` : `Royal Advisor · ${formatTime(new Date())}`;
-        row.appendChild(meta);
+            // Update banner
+            const banner = document.getElementById('weatherBanner');
+            banner.classList.add('visible');
+            document.getElementById('weatherIcon').textContent = WMO_EMOJI[w.code] || '🌤️';
+            document.getElementById('weatherTemp').textContent = `${w.temperature}${w.unit}`;
+            document.getElementById('weatherDesc').textContent = w.description;
+            document.getElementById('weatherStats').innerHTML =
+                `<span>Feels ${w.feelsLike}${w.unit}</span><span>💧${w.humidity}%</span><span>💨${w.windSpeed} ${w.windUnit}</span>`;
 
-        const bubble = document.createElement('div');
-        if (isSpinner) {
-            bubble.className = 'bubble loading';
-            bubble.innerHTML = '<div class="spinner"></div><span>Consulting the archives…</span>';
-        } else {
-            bubble.className = `bubble ${isUser ? 'user' : 'ai'}`;
-            bubble.textContent = text;
+            document.getElementById('weatherToggleBtn').classList.add('active');
+            document.getElementById('weatherDot').classList.add('on');
+            updateHint();
+            showToast('Weather context enabled.');
+        } catch (err) {
+            showToast('Weather unavailable: ' + err.message, true);
         }
-        row.appendChild(bubble);
+    }, () => {
+        showToast('Location permission denied.', true);
+    });
+}
 
-        if (!isUser && !isSpinner) {
-            const actions = document.createElement('div');
-            actions.className = 'msg-actions';
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'action-btn';
-            copyBtn.textContent = '📋 Copy';
-            copyBtn.onclick = () => {
-                navigator.clipboard.writeText(text).then(() => {
-                    copyBtn.textContent = '✅ Copied';
-                    setTimeout(() => copyBtn.textContent = '📋 Copy', 1500);
-                });
-            };
-            actions.appendChild(copyBtn);
-            row.appendChild(actions);
+function dismissWeather() {
+    weatherActive = false;
+    weatherCtx = '';
+    document.getElementById('weatherBanner').classList.remove('visible');
+    document.getElementById('weatherToggleBtn').classList.remove('active');
+    document.getElementById('weatherDot').classList.remove('on');
+    updateHint();
+}
+
+// ── File handling ──────────────────────────────────────────────────────────────
+const MIME_ICONS = {
+    'application/pdf':'📕', 'application/json':'📋',
+    'text/plain':'📄','text/markdown':'📝','text/csv':'📊',
+    'image/jpeg':'🖼️','image/png':'🖼️','image/webp':'🖼️','image/gif':'🎞️',
+};
+
+function onFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    selectedFile = file;
+
+    const preview = document.getElementById('filePreview');
+    document.getElementById('fileIcon').textContent = MIME_ICONS[file.type] || '📄';
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatBytes(file.size);
+    preview.classList.add('visible');
+    document.getElementById('attachBtn').classList.add('has-file');
+}
+
+function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('filePreview').classList.remove('visible');
+    document.getElementById('attachBtn').classList.remove('has-file');
+}
+
+function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ── Suggestions ────────────────────────────────────────────────────────────────
+function setPrompt(text) {
+    document.getElementById('chatInput').value = text;
+    document.getElementById('chatInput').focus();
+}
+
+// ── Message rendering ──────────────────────────────────────────────────────────
+function formatTime(d) { return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+
+function addMessage(text, isUser, isSpinner=false, fileName=null) {
+    const container = document.getElementById('messages');
+    document.getElementById('emptyState')?.remove();
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${isUser ? 'user' : 'ai'}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = isUser ? `Aspirant · ${formatTime(new Date())}` : `Royal Advisor · ${formatTime(new Date())}`;
+    row.appendChild(meta);
+
+    const bubble = document.createElement('div');
+
+    if (isSpinner) {
+        bubble.className = 'bubble loading';
+        bubble.innerHTML = '<div class="spinner"></div><span>Consulting the archives…</span>';
+    } else {
+        bubble.className = `bubble ${isUser ? 'user' : 'ai'}`;
+        if (fileName) {
+            const tag = document.createElement('div');
+            tag.className = 'file-tag';
+            tag.textContent = `📎 ${fileName}`;
+            bubble.appendChild(tag);
         }
-
-        container.appendChild(row);
-        container.scrollTop = container.scrollHeight;
-        return row;
+        const textNode = document.createTextNode(text);
+        bubble.appendChild(textNode);
     }
+    row.appendChild(bubble);
 
-    // ── Add multi-model response block ─────────────────────────────────────
-    function addMultiBlock(question, models) {
-        const container = document.getElementById('messages');
-        document.getElementById('emptyState')?.remove();
-
-        const block = document.createElement('div');
-        block.className = 'multi-block';
-
-        // Show the user's question
-        const q = document.createElement('div');
-        q.className = 'multi-question';
-        q.textContent = `"${question}"`;
-        block.appendChild(q);
-
-        const colClass = models.length === 1 ? 'cols-1' : models.length === 2 ? 'cols-2' : 'cols-3';
-        const grid = document.createElement('div');
-        grid.className = `multi-grid ${colClass}`;
-
-        // Create a card per model (with spinner initially)
-        const cards = {};
-        models.forEach(model => {
-            const card = document.createElement('div');
-            card.className = 'model-card';
-            card.innerHTML = `
-                <div class="model-card-header">
-                    <span class="model-card-name">${model}</span>
-                    <span class="model-card-tag" id="tag-${model}">thinking…</span>
-                </div>
-                <div class="model-spinner" id="spinner-${model}">
-                    <div class="spinner"></div><span>Consulting…</span>
-                </div>
-                <div class="model-card-body" id="body-${model}" style="display:none;">
-                    <div class="model-card-text" id="text-${model}"></div>
-                </div>
-                <div class="model-card-actions" id="actions-${model}" style="display:none;">
-                    <button class="action-btn" onclick="copyModelResponse('${model}')">📋 Copy</button>
-                </div>
-            `;
-            grid.appendChild(card);
-            cards[model] = card;
-        });
-
-        block.appendChild(grid);
-        container.appendChild(block);
-        container.scrollTop = container.scrollHeight;
-        return cards;
-    }
-
-    function fillModelCard(model, reply, isError) {
-        const spinner = document.getElementById(`spinner-${model}`);
-        const body = document.getElementById(`body-${model}`);
-        const text = document.getElementById(`text-${model}`);
-        const tag = document.getElementById(`tag-${model}`);
-        const actions = document.getElementById(`actions-${model}`);
-        const card = spinner?.closest('.model-card');
-
-        if (spinner) spinner.style.display = 'none';
-        if (body) { body.style.display = 'block'; text.textContent = reply; }
-        if (tag) {
-            tag.textContent = isError ? 'error' : 'done';
-            tag.className = `model-card-tag${isError ? ' err' : ''}`;
-        }
-        if (card && isError) card.classList.add('error');
-        if (actions) actions.style.display = 'flex';
-
-        // Store reply text for copy
-        if (actions) actions.dataset.reply = reply;
-    }
-
-    window._modelReplies = {};
-    function copyModelResponse(model) {
-        const text = document.getElementById(`text-${model}`)?.textContent;
-        if (text) {
+    if (!isUser && !isSpinner) {
+        const actions = document.createElement('div');
+        actions.className = 'msg-actions';
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn';
+        copyBtn.textContent = '📋 Copy';
+        copyBtn.onclick = () => {
             navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector(`#actions-${model} .action-btn`);
-                if (btn) { btn.textContent = '✅ Copied'; setTimeout(() => btn.textContent = '📋 Copy', 1500); }
+                copyBtn.textContent = '✅ Copied';
+                setTimeout(() => copyBtn.textContent = '📋 Copy', 1500);
             });
-        }
+        };
+        actions.appendChild(copyBtn);
+        row.appendChild(actions);
     }
 
-    // ── SEND MESSAGE ───────────────────────────────────────────────────────
-    async function sendMessage(override) {
-        const input = document.getElementById('chatInput');
-        const text = override || input.value.trim();
-        if (!text) return;
-        input.value = '';
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+    return row;
+}
 
-        const token = localStorage.getItem('token');
+function addMultiBlock(question, models) {
+    const container = document.getElementById('messages');
+    document.getElementById('emptyState')?.remove();
 
-        if (mode === 'single') {
-            // ── Single model ──────────────────────────────────────────────
-            addMessage(text, true);
-            const spinner = addMessage('', false, true);
-            try {
-                const r = await fetch('/api/chat', {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-                    body:JSON.stringify({ message:text, model: primaryModel || availableModels[0] || 'llama3' })
-                });
-                const d = await r.json();
-                spinner.remove();
-                addMessage(d.reply || 'No response', false);
-            } catch {
-                spinner.remove();
-                addMessage('Could not reach the server. Please try again.', false);
-            }
+    const block = document.createElement('div');
+    block.className = 'multi-block';
 
-        } else {
-            // ── Multi model ───────────────────────────────────────────────
-            if (selectedModels.size === 0) {
-                addMessage('Please select at least one model from the sidebar.', false);
-                return;
-            }
+    const q = document.createElement('div');
+    q.className = 'multi-question';
+    q.textContent = `"${question}"`;
+    block.appendChild(q);
 
-            const models = [...selectedModels];
-            addMultiBlock(text, models);
+    const colClass = models.length === 1 ? 'cols-1' : models.length === 2 ? 'cols-2' : 'cols-3';
+    const grid = document.createElement('div');
+    grid.className = `multi-grid ${colClass}`;
 
-            try {
-                const r = await fetch('/api/chat/multi', {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-                    body:JSON.stringify({ message:text, models })
-                });
-                const d = await r.json();
+    models.forEach(model => {
+        const label = availableModels.find(m => m.model === model)?.label || model;
+        const card = document.createElement('div');
+        card.className = 'model-card';
+        card.innerHTML = `
+            <div class="model-card-header">
+                <span class="model-card-name">${label}</span>
+                <span class="model-card-tag" id="tag-${CSS.escape(model)}">thinking…</span>
+            </div>
+            <div class="model-spinner" id="spinner-${CSS.escape(model)}">
+                <div class="spinner"></div><span>Consulting…</span>
+            </div>
+            <div class="model-card-body" id="body-${CSS.escape(model)}" style="display:none;">
+                <div class="model-card-text" id="text-${CSS.escape(model)}"></div>
+            </div>
+            <div class="model-card-actions" id="actions-${CSS.escape(model)}" style="display:none;">
+                <button class="action-btn" onclick="copyModelResponse('${model.replace(/'/g,"\\'")}')">📋 Copy</button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
 
-                d.results.forEach(({ model, reply, error }) => {
-                    fillModelCard(model, reply, error);
-                });
+    block.appendChild(grid);
+    container.appendChild(block);
+    container.scrollTop = container.scrollHeight;
+}
 
-            } catch (err) {
-                models.forEach(model => {
-                    fillModelCard(model, 'Server error. Please try again.', true);
-                });
-            }
+function fillModelCard(model, reply, isError) {
+    const id = CSS.escape(model);
+    const spinner = document.getElementById(`spinner-${id}`);
+    const body    = document.getElementById(`body-${id}`);
+    const textEl  = document.getElementById(`text-${id}`);
+    const tag     = document.getElementById(`tag-${id}`);
+    const actions = document.getElementById(`actions-${id}`);
+    const card    = spinner?.closest('.model-card');
 
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-        }
+    if (spinner) spinner.style.display = 'none';
+    if (body) { body.style.display = 'block'; textEl.textContent = reply; }
+    if (tag) { tag.textContent = isError ? 'error' : 'done'; tag.className = `model-card-tag${isError?' err':''}`; }
+    if (card && isError) card.classList.add('error');
+    if (actions) actions.style.display = 'flex';
+
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+
+function copyModelResponse(model) {
+    const textEl = document.getElementById(`text-${CSS.escape(model)}`);
+    if (!textEl) return;
+    navigator.clipboard.writeText(textEl.textContent).then(() => {
+        const btn = document.querySelector(`#actions-${CSS.escape(model)} .action-btn`);
+        if (btn) { btn.textContent = '✅ Copied'; setTimeout(()=>btn.textContent='📋 Copy',1500); }
+    });
+}
+
+// ── SEND MESSAGE ───────────────────────────────────────────────────────────────
+async function sendMessage(override) {
+    const input = document.getElementById('chatInput');
+    const text  = override || input.value.trim();
+    if ((!text && !selectedFile) || isSending) return;
+
+    input.value = '';
+    isSending = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    const token    = localStorage.getItem('token');
+    const userFile = selectedFile;
+    const fileName = userFile?.name || null;
+    clearFile();
+
+    // Build FormData for multipart (supports file + fields)
+    function buildForm(extra = {}) {
+        const fd = new FormData();
+        fd.append('message',  text || '(Please review the attached file)');
+        fd.append('subject',  currentSubject);
+        if (weatherActive && weatherCtx) fd.append('weatherCtx', weatherCtx);
+        if (userFile) fd.append('file', userFile);
+        Object.entries(extra).forEach(([k,v]) => fd.append(k, v));
+        return fd;
     }
 
-    // ── Load conversation history ──────────────────────────────────────────
-    async function loadHistory() {
-        const userId = localStorage.getItem('userId');
-        const token = localStorage.getItem('token');
-        if (!userId || !token) return;
+    if (mode === 'single') {
+        // ── Single model ──────────────────────────────────────────────────────
+        addMessage(text, true, false, fileName);
+        const spinnerRow = addMessage('', false, true);
+
         try {
-            const r = await fetch(`/api/conversations/${userId}`, { headers:{'Authorization':`Bearer ${token}`} });
-            const d = await r.json();
-            const list = document.getElementById('sidebarList');
-            d.conversations?.slice(0,8).forEach(c => {
-                const item = document.createElement('div');
-                item.className = 's-item';
-                item.innerHTML = `<span class="s-text">${c.message.replace(/^\[.*?\] /,'').substring(0,26)}…</span>`;
-                item.title = c.message;
-                list.appendChild(item);
-            });
-        } catch {}
-    }
+            const modelEntry = availableModels.find(m => m.model === primaryModel);
+            const provider   = modelEntry?.provider || 'ollama';
 
-    // ── Search ─────────────────────────────────────────────────────────────
-    async function searchMessages() {
-        const query = document.getElementById('searchInput').value.trim();
-        if (!query) return;
-        const token = localStorage.getItem('token');
-        try {
-            const r = await fetch(`/api/conversations/search?query=${encodeURIComponent(query)}`, { headers:{'Authorization':`Bearer ${token}`} });
-            const d = await r.json();
-            const container = document.getElementById('messages');
-            container.innerHTML = '';
-            if (d.results?.length) {
-                d.results.forEach(c => { addMessage(c.message, true); addMessage(c.reply, false); });
+            let reply;
+
+            // Use new unified LLM endpoint for cloud models, fallback to old /api/chat for ollama
+            if (provider === 'ollama') {
+                // Old /api/chat endpoint expects JSON (req.body parsed by express.json())
+                // If there's a file, route through new /api/llm/chat which uses multer instead
+                if (userFile) {
+                    const fd = buildForm({ model: primaryModel, provider: 'ollama' });
+                    const r  = await fetch('/api/llm/chat', {
+                        method:'POST',
+                        headers:{'Authorization':`Bearer ${token}`},
+                        body: fd
+                    });
+                    const d = await r.json();
+                    console.debug('[chat] ollama+file response:', d);
+                    reply = d.reply || d.response || d.message || JSON.stringify(d);
+                } else {
+                    // No file — send JSON so express.json() middleware parses it correctly
+                    const r  = await fetch('/api/chat', {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json',
+                            'Authorization':`Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            message: text || '(Please review the attached file)',
+                            model:   primaryModel,
+                            subject: currentSubject,
+                        })
+                    });
+                    const d = await r.json();
+                    console.debug('[chat] ollama response:', d);
+                    reply = d.reply || d.response || d.message || d.text
+                          || (typeof d === 'string' ? d : null)
+                          || '⚠ Received empty response. Check that Ollama is running and the model is pulled.';
+                }
             } else {
-                container.innerHTML = '<div style="text-align:center;color:var(--ink-muted);padding:40px;font-family:Cormorant Garamond,serif;font-style:italic;font-size:16px;">No records found in the archives.</div>';
+                // New unified endpoint
+                const fd = buildForm({ model: primaryModel, provider });
+                const r  = await fetch('/api/llm/chat', {
+                    method:'POST',
+                    headers:{'Authorization':`Bearer ${token}`},
+                    body: fd
+                });
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || `Server error ${r.status}`);
+                reply = d.reply || 'No response received.';
             }
-        } catch {}
+
+            spinnerRow.remove();
+            addMessage(reply, false);
+
+        } catch(err) {
+            spinnerRow.remove();
+            addMessage(`⚠ ${err.message}`, false);
+        }
+
+    } else {
+        // ── Multi model ───────────────────────────────────────────────────────
+        if (selectedModels.size === 0) {
+            addMessage('Please select at least one model from the sidebar.', false);
+            isSending = false;
+            document.getElementById('sendBtn').disabled = false;
+            return;
+        }
+
+        const models = [...selectedModels];
+        addMultiBlock(text || '(attached file)', models);
+
+        // Fan out requests in parallel
+        const results = await Promise.allSettled(
+            models.map(async model => {
+                const modelEntry = availableModels.find(m => m.model === model);
+                const provider   = modelEntry?.provider || 'ollama';
+
+                let r, d;
+                if (provider === 'ollama' && !userFile) {
+                    // Old /api/chat expects JSON body
+                    r = await fetch('/api/chat', {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json',
+                            'Authorization':`Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            message: text || '(Please review the attached file)',
+                            model,
+                            subject: currentSubject,
+                        })
+                    });
+                } else {
+                    // New route: cloud models or ollama+file
+                    const fd = buildForm({ model, provider });
+                    r = await fetch('/api/llm/chat', {
+                        method:'POST',
+                        headers:{'Authorization':`Bearer ${token}`},
+                        body: fd
+                    });
+                }
+                d = await r.json();
+                console.debug(`[chat/multi] ${model}:`, d);
+                if (!r.ok) throw new Error(d.error || `Server error ${r.status}`);
+                const reply = d.reply || d.response || d.message || d.text
+                            || '\u26a0 Empty response — check Ollama is running.';
+                return { model, reply };
+            })
+        );
+
+        results.forEach((result, i) => {
+            if (result.status === 'fulfilled') {
+                fillModelCard(result.value.model, result.value.reply, false);
+            } else {
+                fillModelCard(models[i], result.reason?.message || 'Error', true);
+            }
+        });
     }
 
-    function logout() { localStorage.clear(); window.location.href = 'landing.html'; }
+    isSending = false;
+    document.getElementById('sendBtn').disabled = false;
+}
 
-    // ── New Session: clears UI and reloads page fresh ─────────────────────
-    function newSession() {
-        // Reload the page — backend history is per-user in DB,
-        // but the UI starts fresh and Ollama gets a clean thread
-        // because we only send the last 10 DB messages as context.
-        // A true new session just means starting a new page load.
-        window.location.href = 'chat.html';
-    }
+// ── Load conversation history ──────────────────────────────────────────────────
+async function loadHistory() {
+    const userId = localStorage.getItem('userId');
+    const token  = localStorage.getItem('token');
+    if (!userId || !token) return;
+    try {
+        const r = await fetch(`/api/conversations/${userId}`, { headers:{'Authorization':`Bearer ${token}`} });
+        const d = await r.json();
+        const list = document.getElementById('sidebarList');
+        d.conversations?.slice(0,8).forEach(c => {
+            const item = document.createElement('div');
+            item.className = 's-item';
+            item.innerHTML = `<span class="s-text">${c.message.replace(/^\[.*?\] /,'').substring(0,26)}…</span>`;
+            item.title = c.message;
+            list.appendChild(item);
+        });
+    } catch {}
+}
 
-    // ── Init ───────────────────────────────────────────────────────────────
-    window.onload = function() {
-        loadModels();
-        loadHistory();
-        const first = localStorage.getItem('firstMessage');
-        if (first) { localStorage.removeItem('firstMessage'); sendMessage(first); }
-    };
+// ── Search ─────────────────────────────────────────────────────────────────────
+async function searchMessages() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+    const token = localStorage.getItem('token');
+    try {
+        const r = await fetch(`/api/conversations/search?query=${encodeURIComponent(query)}`,
+            { headers:{'Authorization':`Bearer ${token}`} });
+        const d = await r.json();
+        const container = document.getElementById('messages');
+        container.innerHTML = '';
+        if (d.results?.length) {
+            d.results.forEach(c => { addMessage(c.message, true); addMessage(c.reply, false); });
+        } else {
+            container.innerHTML = '<div style="text-align:center;color:var(--ink-muted);padding:40px;font-family:\'Cormorant Garamond\',serif;font-style:italic;font-size:16px;">No records found in the archives.</div>';
+        }
+    } catch {}
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, isErr=false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = `show${isErr?' err':''}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// ── Misc ───────────────────────────────────────────────────────────────────────
+function logout() { localStorage.clear(); window.location.href = 'landing.html'; }
+function newSession() { window.location.href = 'chat.html'; }
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+window.onload = function() {
+    loadModels();
+    loadHistory();
+    const first = localStorage.getItem('firstMessage');
+    if (first) { localStorage.removeItem('firstMessage'); sendMessage(first); }
+};
 </script>
 </body>
 </html>

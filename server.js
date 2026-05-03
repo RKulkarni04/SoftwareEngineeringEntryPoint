@@ -5,6 +5,7 @@ const path = require("path");
 require("./database");
 
 const authRoutes = require("./routes/authRoutes");
+const llmRoutes  = require("./routes/llm");
 
 const app = express();
 
@@ -83,11 +84,12 @@ app.get("/api/conversations/:userId", (req, res) => {
 app.use("/api", authRoutes);
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "frontend", "landing.html"));
+  res.sendFile(path.join(__dirname, "frontend", "landing.html"));
 });
 
 const PORT = 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Chat UI → http://localhost:${PORT}/chat.html`);
 });
