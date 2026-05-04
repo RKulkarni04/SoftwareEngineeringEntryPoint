@@ -1,1 +1,14 @@
 node_modules/
+
+# Local data and secrets (never commit)
+database.db
+*.db
+.env
+.env.*
+!.env.example
+
+# User uploads from chat file attachment flow
+uploads/
+
+# macOS
+.DS_Store
