@@ -373,12 +373,7 @@
         <!-- Previous chats list - hidden by default, shown after login -->
         <div id="chatHistory" class="hidden w-full mt-10" style="max-width:520px">
             <div class="ep-section-label">Recent Sessions</div>
-            <ul id="chatList" class="bg-white border rounded-lg overflow-hidden" style="border-color:var(--parchment)">
-                <li class="ep-history-item" onclick="window.location.href='chat.html'">
-                    <span class="ep-history-dot"></span>
-                    Study Session 1
-                </li>
-            </ul>
+            <ul id="chatList" class="bg-white border rounded-lg overflow-hidden" style="border-color:var(--parchment)"></ul>
         </div>
 
         <!-- Feature cards - shown when logged out -->
@@ -412,6 +407,45 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const loginDropdown = document.getElementById('loginDropdown');
 
+        async function loadLandingRecentSession() {
+            const token = localStorage.getItem('token');
+            const ul = document.getElementById('chatList');
+            if (!token || !ul) return;
+            ul.innerHTML = '';
+            const li = document.createElement('li');
+            li.className = 'ep-history-item';
+            const dot = document.createElement('span');
+            dot.className = 'ep-history-dot';
+            function openStudyRoom(chatId) {
+                if (chatId != null && chatId !== '') {
+                    sessionStorage.setItem('currentChatId', String(chatId));
+                } else {
+                    sessionStorage.removeItem('currentChatId');
+                }
+                window.location.href = 'chat.html';
+            }
+            try {
+                const r = await fetch('/api/chats/recent', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                if (!r.ok) throw new Error('bad');
+                const data = await r.json();
+                li.appendChild(dot);
+                if (data.id != null && data.title) {
+                    li.appendChild(document.createTextNode(data.title));
+                    li.onclick = function() { openStudyRoom(data.id); };
+                } else {
+                    li.appendChild(document.createTextNode('Study Room'));
+                    li.onclick = function() { openStudyRoom(null); };
+                }
+            } catch (e) {
+                li.appendChild(dot);
+                li.appendChild(document.createTextNode('Study Room'));
+                li.onclick = function() { openStudyRoom(null); };
+            }
+            ul.appendChild(li);
+        }
+
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const errCode = urlParams.get('error');
@@ -441,6 +475,7 @@
                         logoutBtn.classList.remove('hidden');
                         document.getElementById('chatHistory').classList.remove('hidden');
                         document.getElementById('featureCards').classList.add('hidden');
+                        loadLandingRecentSession();
                     }
                 } catch(e) {
                     localStorage.removeItem('token');
@@ -497,6 +532,7 @@
                     loginDropdown.classList.add('hidden');
                     document.getElementById('chatHistory').classList.remove('hidden');
                     document.getElementById('featureCards').classList.add('hidden');
+                    loadLandingRecentSession();
                 } else if (data.requires2FA) {
                     document.getElementById('totpSection').classList.remove('hidden');
                     errorMsg.classList.remove('hidden');

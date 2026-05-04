@@ -66,7 +66,9 @@
             const wrap = document.getElementById('rows');
             let chats = [];
             try {
-                const r = await fetch('/api/mastery/' + userId, {
+                const active = sessionStorage.getItem('currentChatId');
+                const q = active ? ('?activeChatId=' + encodeURIComponent(active)) : '';
+                const r = await fetch('/api/mastery/' + userId + q, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (r.status === 401 || r.status === 403) {

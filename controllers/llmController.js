@@ -9,7 +9,8 @@
 
 const { readFileForContext } = require("../middleware/upload");
 const db = require("../database");
-const { appendMasteryPrompt, extractMasteryFromReply } = require("../utils/mastery");
+const { appendMasteryToSystem, extractMasteryFromReply } = require("../utils/mastery");
+const { scoreMasteryWithProvider } = require("../utils/masteryScorer");
 const { verifyUserOwnsChat, setChatMasteryScore } = require("../utils/chatMastery");
 
 // ─── Subject system prompts ───────────────────────────────────────────────────
@@ -175,13 +176,15 @@ async function chat(req, res) {
       systemPrompt += `\n\nCurrent weather context: ${weatherCtx}`;
     }
 
+    systemPrompt = appendMasteryToSystem(systemPrompt);
+
     // Inject uploaded file content
     let userMessage = message.trim();
     if (req.file) {
-      const fileContent = readFileForContext(req.file.path, req.file.mimetype);
+      const fileContent = await readFileForContext(req.file.path, req.file.mimetype);
       userMessage = `[Attached file: ${req.file.originalname}]\n\`\`\`\n${fileContent}\n\`\`\`\n\n${userMessage}`;
     }
-    const userMessageForModel = appendMasteryPrompt(userMessage);
+    const userMessageForModel = userMessage;
 
     // Resolve provider
     const providerKey = explicitProvider || detectProvider(model);
@@ -207,18 +210,32 @@ async function chat(req, res) {
     }
 
     const rawReply = await providerFn({ systemPrompt, userMessage: userMessageForModel, model });
-    const { reply, score } = extractMasteryFromReply(rawReply);
+    const { reply } = extractMasteryFromReply(rawReply);
+
+    let finalScore = null;
+    if (reply && String(reply).trim()) {
+      finalScore = await scoreMasteryWithProvider(
+        PROVIDERS[providerKey],
+        model,
+        userMessage,
+        reply,
+        subjectKey
+      );
+    }
+    if (finalScore == null && String(reply || "").trim()) {
+      console.warn("[mastery] scorer failed", { chatId, provider: providerKey });
+    }
 
     db.run(
       "INSERT INTO conversations (user_id, message, reply, created_at, chat_id) VALUES (?, ?, ?, datetime('now'), ?)",
       [userId, message.trim(), reply, chatId]
     );
-    setChatMasteryScore(chatId, userId, score);
+    setChatMasteryScore(chatId, userId, finalScore);
     db.run("UPDATE chat_sessions SET updated_at = datetime('now') WHERE id = ? AND user_id = ?", [chatId, userId]);
 
     return res.json({
       reply,
-      mastery: score,
+      mastery: finalScore,
       provider: providerKey,
       model: model || null,
       subject: subjectKey,

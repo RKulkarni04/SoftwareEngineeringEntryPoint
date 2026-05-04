@@ -1,8 +1,10 @@
 const db = require("../database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { appendMasteryPrompt, extractMasteryFromReply } = require("../utils/mastery");
+const { appendMasteryToSystem, extractMasteryFromReply } = require("../utils/mastery");
+const { scoreMasteryWithOllamaFetch } = require("../utils/masteryScorer");
 const { verifyUserOwnsChat, setChatMasteryScore } = require("../utils/chatMastery");
+const { pickUnusedTitle } = require("../utils/chatTitles");
 
 const SECRET = "supersecretkey";
 
@@ -82,33 +84,80 @@ exports.getProgress = (req, res) => {
 
 
 // GET MASTERY LIST (one row per named chat session)
+// Optional ?activeChatId= — include that row even if it has no messages yet; otherwise only sessions with ≥1 conversation.
 exports.getMastery = (req, res) => {
     const studentId = req.params.id;
     if (String(req.user.id) !== String(studentId)) {
         return res.status(403).json({ error: "Forbidden" });
     }
-    db.all(
-        "SELECT id, title, mastery_score, updated_at FROM chat_sessions WHERE user_id = ? ORDER BY datetime(updated_at) DESC",
-        [studentId],
-        (err, rows) => {
-            if (err) return res.status(500).json({ error: "Database error" });
-            res.json({ chats: rows || [] });
-        }
-    );
+    const rawActive = req.query && req.query.activeChatId;
+    const activeId = parseInt(String(rawActive), 10);
+    const hasActive = rawActive != null && String(rawActive).trim() !== "" && activeId > 0;
+
+    let sql;
+    let params;
+    const countSel =
+        "(SELECT COUNT(*) FROM conversations c WHERE c.chat_id = s.id AND c.user_id = s.user_id) AS message_count";
+    if (hasActive) {
+        sql =
+            "SELECT s.id, s.title, s.mastery_score, s.updated_at, " +
+            countSel +
+            " FROM chat_sessions s " +
+            "WHERE s.user_id = ? AND (s.id = ? OR EXISTS (" +
+            "SELECT 1 FROM conversations c WHERE c.chat_id = s.id AND c.user_id = ? LIMIT 1" +
+            ")) ORDER BY datetime(s.updated_at) DESC";
+        params = [studentId, activeId, studentId];
+    } else {
+        sql =
+            "SELECT s.id, s.title, s.mastery_score, s.updated_at, " +
+            countSel +
+            " FROM chat_sessions s " +
+            "WHERE s.user_id = ? AND EXISTS (" +
+            "SELECT 1 FROM conversations c WHERE c.chat_id = s.id AND c.user_id = ? LIMIT 1" +
+            ") ORDER BY datetime(s.updated_at) DESC";
+        params = [studentId, studentId];
+    }
+
+    db.all(sql, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        res.json({ chats: rows || [] });
+    });
 };
 
 
 // CREATE CHAT SESSION (named thread for mastery + scoped history)
+// Title is always chosen server-side: "Study session 1", "Study session 2", … (body title ignored).
 exports.createChat = (req, res) => {
     const userId = req.user.id;
-    const raw = (req.body && req.body.title != null) ? String(req.body.title).trim() : "";
-    const title = raw.length ? raw.slice(0, 200) : "Study session";
-    db.run(
-        "INSERT INTO chat_sessions (user_id, title, mastery_score, created_at, updated_at) VALUES (?, ?, 0, datetime('now'), datetime('now'))",
-        [userId, title],
-        function(err) {
+    db.all(
+        "SELECT DISTINCT title FROM chat_sessions WHERE user_id = ?",
+        [userId],
+        (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ chatId: this.lastID, title });
+            const used = new Set((rows || []).map((r) => r.title).filter(Boolean));
+            const title = pickUnusedTitle(used);
+            db.run(
+                "INSERT INTO chat_sessions (user_id, title, mastery_score, created_at, updated_at) VALUES (?, ?, 0, datetime('now'), datetime('now'))",
+                [userId, title],
+                function(err2) {
+                    if (err2) return res.status(500).json({ error: err2.message });
+                    res.json({ chatId: this.lastID, title });
+                }
+            );
+        }
+    );
+};
+
+/** Latest thread by `updated_at` — for landing “recent session” (title matches Study Room). */
+exports.getRecentChatSession = (req, res) => {
+    const userId = req.user.id;
+    db.get(
+        "SELECT id, title FROM chat_sessions WHERE user_id = ? ORDER BY datetime(updated_at) DESC, id DESC LIMIT 1",
+        [userId],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: "Database error" });
+            if (!row) return res.json({});
+            res.json({ id: row.id, title: row.title });
         }
     );
 };
@@ -135,8 +184,9 @@ exports.chatMessage = async (req, res) => {
     const { message, model, subject, chatId: chatIdRaw } = req.body;
     const userId        = req.user.id;
     const selectedModel = model || "llama3";
-    const systemPrompt  = SUBJECT_PROMPTS[(subject || "general").toLowerCase()]
+    const baseSystem = SUBJECT_PROMPTS[(subject || "general").toLowerCase()]
                         || SUBJECT_PROMPTS.general;
+    const systemPrompt = appendMasteryToSystem(baseSystem);
 
     if (!message) {
         return res.status(400).json({ error: "message is required" });
@@ -165,7 +215,7 @@ exports.chatMessage = async (req, res) => {
             messages.push({ role: "user",      content: row.message });
             messages.push({ role: "assistant", content: row.reply   });
         });
-        messages.push({ role: "user", content: appendMasteryPrompt(message) });
+        messages.push({ role: "user", content: message });
 
         const response = await fetch("http://127.0.0.1:11434/api/chat", {
             method:  "POST",
@@ -183,16 +233,30 @@ exports.chatMessage = async (req, res) => {
         }
 
         const rawReply = data.message?.content || data.response || "No response from model.";
-        const { reply, score } = extractMasteryFromReply(rawReply);
+        const { reply } = extractMasteryFromReply(rawReply);
+
+        const subjectKey = (subject || "general").toLowerCase();
+        let finalScore = null;
+        if (reply && String(reply).trim()) {
+            finalScore = await scoreMasteryWithOllamaFetch({
+                model: selectedModel,
+                studentMessage: message,
+                assistantReply: reply,
+                subjectKey,
+            });
+        }
+        if (finalScore == null && String(reply || "").trim()) {
+            console.warn("[mastery] scorer failed", { chatId, provider: "ollama" });
+        }
 
         db.run(
             "INSERT INTO conversations (user_id, message, reply, created_at, chat_id) VALUES (?, ?, ?, datetime('now'), ?)",
             [userId, message, reply, chatId]
         );
-        setChatMasteryScore(chatId, userId, score);
+        setChatMasteryScore(chatId, userId, finalScore);
         db.run("UPDATE chat_sessions SET updated_at = datetime('now') WHERE id = ? AND user_id = ?", [chatId, userId]);
 
-        res.json({ reply, mastery: score });
+        res.json({ reply, mastery: finalScore });
 
     } catch (err) {
         console.error("Ollama fetch error:", err);
@@ -237,8 +301,9 @@ exports.searchConversations = (req, res) => {
 exports.multiModelChat = async (req, res) => {
     const { message, models, subject, chatId: chatIdRaw } = req.body;
     const userId       = req.user.id;
-    const systemPrompt = SUBJECT_PROMPTS[(subject || "general").toLowerCase()]
+    const baseSystem = SUBJECT_PROMPTS[(subject || "general").toLowerCase()]
                        || SUBJECT_PROMPTS.general;
+    const systemPrompt = appendMasteryToSystem(baseSystem);
 
     if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -269,9 +334,10 @@ exports.multiModelChat = async (req, res) => {
         historyMessages.push({ role: "assistant", content: row.reply   });
     });
 
+    const subjectKeyMulti = (subject || "general").toLowerCase();
     const modelRequests = models.map(async (model) => {
         try {
-            const messages = [...historyMessages, { role: "user", content: appendMasteryPrompt(message) }];
+            const messages = [...historyMessages, { role: "user", content: message }];
             const response = await fetch("http://127.0.0.1:11434/api/chat", {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
@@ -285,14 +351,24 @@ exports.multiModelChat = async (req, res) => {
             }
 
             const rawReply = data.message?.content || data.response || "No response from model.";
-            const { reply, score } = extractMasteryFromReply(rawReply);
+            const { reply } = extractMasteryFromReply(rawReply);
+
+            let mastery = null;
+            if (reply && String(reply).trim()) {
+                mastery = await scoreMasteryWithOllamaFetch({
+                    model,
+                    studentMessage: message,
+                    assistantReply: reply,
+                    subjectKey: subjectKeyMulti,
+                });
+            }
 
             db.run(
                 "INSERT INTO conversations (user_id, message, reply, created_at, chat_id) VALUES (?, ?, ?, datetime('now'), ?)",
                 [userId, `[${model}] ${message}`, reply, chatId]
             );
 
-            return { model, reply, error: false, mastery: score };
+            return { model, reply, error: false, mastery };
 
         } catch (err) {
             console.error(`Error querying model ${model}:`, err);
@@ -307,6 +383,13 @@ exports.multiModelChat = async (req, res) => {
 
     const results = await Promise.all(modelRequests);
     const scores = results.filter((r) => !r.error && r.mastery != null).map((r) => r.mastery);
+    if (!scores.length) {
+        const anyReply = results.some((r) => !r.error && r.reply && String(r.reply).trim());
+        if (anyReply) {
+            console.warn("[mastery/multi] all scorers failed", { chatId, provider: "ollama" });
+        }
+    }
+
     if (scores.length) {
         setChatMasteryScore(chatId, userId, Math.max(...scores));
         db.run("UPDATE chat_sessions SET updated_at = datetime('now') WHERE id = ? AND user_id = ?", [chatId, userId]);

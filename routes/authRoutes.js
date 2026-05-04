@@ -12,7 +12,8 @@ const {
   getConversations,
   searchConversations,
   getMastery,
-  createChat
+  createChat,
+  getRecentChatSession
 } = require("../controllers/authController");
 
 const authenticateToken = require("../middleware/authMiddleware");
@@ -26,6 +27,7 @@ router.get("/progress/:id", authenticateToken, getProgress);
 router.get("/activity/:id", authenticateToken, getActivity);
 
 // Chat routes
+router.get("/chats/recent", authenticateToken, getRecentChatSession);
 router.post("/chats", authenticateToken, createChat);
 router.post("/chat", authenticateToken, chatMessage);
 router.post("/chat/multi", authenticateToken, multiModelChat);

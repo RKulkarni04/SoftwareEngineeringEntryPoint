@@ -302,7 +302,7 @@
     </div>
     <div class="topbar-actions">
         <a href="landing.html" class="t-btn">Home</a>
-        <a href="chat.html" class="t-btn" onclick="sessionStorage.removeItem('currentChatId')">New Session</a>
+        <a href="chat.html" class="t-btn" onclick="return beginNewSessionIfAllowed(event)">New Session</a>
         <a href="mastery.html" class="t-btn">Mastery</a>
         <button class="t-btn danger" onclick="logout()">Depart</button>
     </div>
@@ -328,7 +328,7 @@
         <!-- New session -->
         <div class="sidebar-section">
             <div class="sidebar-heading">Session</div>
-            <button class="new-btn" onclick="newSession()">+ Begin New Session</button>
+            <button class="new-btn" type="button" onclick="beginNewSessionIfAllowed(event)">+ Begin New Session</button>
         </div>
 
         <!-- Subject selector -->
@@ -466,9 +466,8 @@ function closeSidebar() {
     document.getElementById('overlay').style.display = 'none';
 }
 
-// ── Session title ──────────────────────────────────────────────────────────────
-const TITLES = ['The Great Library','Studies in Reason','The Scholar\'s Pursuit','Chambers of Knowledge','The Inquiry Hall'];
-document.getElementById('sessionTitle').textContent = TITLES[Math.floor(Math.random()*TITLES.length)];
+// ── Session title (assigned by server on first POST /api/chats) ───────────────
+document.getElementById('sessionTitle').textContent = 'Study session';
 
 // ── User info ──────────────────────────────────────────────────────────────────
 const uName = localStorage.getItem('userName') || 'Scholar';
@@ -500,21 +499,87 @@ function getCurrentChatId() {
     return sessionStorage.getItem('currentChatId');
 }
 
+let ensureChatSessionPromise = null;
+
+async function beginNewSessionIfAllowed(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    const cid = getCurrentChatId();
+    if (!token || !userId) {
+        window.location.href = 'chat.html';
+        return false;
+    }
+    if (!cid) {
+        window.location.href = 'chat.html';
+        return false;
+    }
+    const navCurrent = document.getElementById('navCurrentSession');
+    const onLiveSession = navCurrent && navCurrent.classList.contains('active');
+    let n = 0;
+    try {
+        const q = `?activeChatId=${encodeURIComponent(cid)}`;
+        const r = await fetch(`/api/mastery/${userId}${q}`, { headers: { Authorization: `Bearer ${token}` } } );
+        if (!r.ok) throw new Error('mastery');
+        const d = await r.json();
+        const row = (d.chats || []).find(function(c) { return String(c.id) === String(cid); });
+        n = row && row.message_count != null ? Number(row.message_count) : 0;
+        if (Number.isNaN(n)) n = 0;
+    } catch {
+        if (!onLiveSession) {
+            returnToCurrentSession();
+            return false;
+        }
+        sessionStorage.removeItem('currentChatId');
+        window.location.href = 'chat.html';
+        return false;
+    }
+    if (!onLiveSession) {
+        if (!n) {
+            returnToCurrentSession();
+            return false;
+        }
+        sessionStorage.removeItem('currentChatId');
+        window.location.href = 'chat.html';
+        return false;
+    }
+    if (!n) {
+        showToast('Send a message in this session first.', true);
+        return false;
+    }
+    sessionStorage.removeItem('currentChatId');
+    window.location.href = 'chat.html';
+    return false;
+}
+
 async function ensureChatSession() {
     const token = localStorage.getItem('token');
     if (!token) return;
     if (getCurrentChatId()) return;
-    const title = (document.getElementById('sessionTitle') && document.getElementById('sessionTitle').textContent) || 'Study session';
+    if (!ensureChatSessionPromise) {
+        ensureChatSessionPromise = (async () => {
+            try {
+                if (getCurrentChatId()) return;
+                const r = await fetch('/api/chats', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({})
+                });
+                if (!r.ok) return;
+                const d = await r.json();
+                if (d.chatId) sessionStorage.setItem('currentChatId', String(d.chatId));
+                if (d.title) {
+                    const el = document.getElementById('sessionTitle');
+                    if (el) el.textContent = d.title;
+                }
+            } catch {}
+        })();
+    }
     try {
-        const r = await fetch('/api/chats', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ title: title.trim().slice(0, 200) })
-        });
-        if (!r.ok) return;
-        const d = await r.json();
-        if (d.chatId) sessionStorage.setItem('currentChatId', String(d.chatId));
-    } catch {}
+        await ensureChatSessionPromise;
+    } finally {
+        ensureChatSessionPromise = null;
+    }
 }
 
 async function loadMasterySummary() {
@@ -523,11 +588,16 @@ async function loadMasterySummary() {
     const cid = getCurrentChatId();
     if (!userId || !token || !cid) return;
     try {
-        const r = await fetch(`/api/mastery/${userId}`, { headers: { Authorization: `Bearer ${token}` } } );
+        const q = cid ? `?activeChatId=${encodeURIComponent(cid)}` : '';
+        const r = await fetch(`/api/mastery/${userId}${q}`, { headers: { Authorization: `Bearer ${token}` } } );
         if (!r.ok) return;
         const d = await r.json();
         const chats = d.chats || [];
         const row = chats.find(c => String(c.id) === String(cid));
+        if (row && row.title) {
+            const titleEl = document.getElementById('sessionTitle');
+            if (titleEl) titleEl.textContent = row.title;
+        }
         setDisciplineMasteryFromScore(row && row.mastery_score != null ? row.mastery_score : null);
     } catch {}
 }
@@ -1109,6 +1179,7 @@ async function sendMessage(override) {
         if (maxMastery != null) setDisciplineMasteryFromScore(maxMastery);
     }
 
+    void loadMasterySummary();
     isSending = false;
     document.getElementById('sendBtn').disabled = false;
 }
@@ -1187,8 +1258,6 @@ function showToast(msg, isErr=false) {
 
 // ── Misc ───────────────────────────────────────────────────────────────────────
 function logout() { localStorage.clear(); window.location.href = 'landing.html'; }
-function newSession() { sessionStorage.removeItem('currentChatId'); window.location.href = 'chat.html'; }
-
 // ── Init ───────────────────────────────────────────────────────────────────────
 window.onload = async function() {
     await ensureChatSession();
