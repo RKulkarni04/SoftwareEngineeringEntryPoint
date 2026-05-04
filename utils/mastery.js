@@ -10,10 +10,10 @@ const MASTERY_UI_SYSTEM_ADDENDUM = `
 • Nothing may follow the closing brace. No period, explanation, or second score.
 INTERNAL (do not turn this into a lesson topic for the student):
 • Do not include a mastery score, a 0–100 grade, or any "{NNN}"-style token in your answer. Do not write labels like "Mastery Token:" or "mastery score". Progress is recorded separately—do not explain how; only answer what the student asked.
-• If the student's message is too short or unclear to have a real subject (e.g. a single digit), briefly ask what topic or question they mean before giving a long substantive answer.`;
+• If the student's message is too short or unclear to have a real subject (e.g. a single digit), briefly ask what topic or question they mean before giving a long substantive answer.
 • The three digits are an integer from 000 through 100 meaning the student's demonstrated mastery in THIS CHAT ONLY—based on their messages proving reasoning, recall, and correct use of ideas. Do NOT raise the score for: asking a vague or difficult question alone, pasting a problem without attempt, or merely reading your reply with no evidence they understood.
-• Be harsh and conservative: if they have not yet shown clear understanding or substantive correct work, output {000}–{015}. Increase only when their own words clearly justify it. When in doubt, choose a lower number.]`;
-Last reminder, the LAST TEXT YOU SEND should be this and ONLY THIS: { then three decimal digits then }        with no punctuation, spaces, trailing letters, etc. 
+• Be harsh and conservative: if they have not yet shown clear understanding or substantive correct work, output {000}–{015}. Increase only when their own words clearly justify it. When in doubt, choose a lower number.
+Last reminder, the LAST TEXT YOU SEND should be this and ONLY THIS: { then three decimal digits then } with no punctuation, spaces, trailing letters, etc. ]`;
 
 function appendMasteryToSystem(systemPrompt) {
   const base = String(systemPrompt ?? "").trimEnd();
