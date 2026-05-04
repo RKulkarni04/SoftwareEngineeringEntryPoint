@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  
-"scripts": {
-  "start": "node server.js",
-  "test": "jasmine",
-  "lint": "eslint"
-},
+  "scripts": {
+    "start": "node server.js",
+    "test": "jasmine",
+    "test:cucumber": "cucumber-js --profile default --exit",
+    "test:cucumber:all-local-models": "cucumber-js --profile all-local-models --exit",
+    "test:cucumber:wip": "cucumber-js --profile wip --exit",
+    "test:all": "jasmine && cucumber-js --profile default --exit",
+    "lint": "eslint"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -36,8 +39,8 @@
   },
   "homepage": "https://github.com/RKulkarni04/SoftwareEngineeringEntryPoint#readme",
   "devDependencies": {
-    "@cucumber/cucumber": "^12.7.0",
+    "@cucumber/cucumber": "^12.8.2",
     "jasmine": "^6.1.0",
-    "puppeteer": "^24.39.1"
+    "puppeteer": "^24.42.0"
   }
 }
