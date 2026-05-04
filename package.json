@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jasmine spec/api.spec.js",
+    "test": "jasmine",
     "test:cucumber": "cucumber-js --profile default --exit",
     "test:cucumber:all-local-models": "cucumber-js --profile all-local-models --exit",
     "test:cucumber:wip": "cucumber-js --profile wip --exit",
