@@ -6,12 +6,16 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { PDFParse } = require("pdf-parse");
 
 // Ensure upload directory exists
 const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+/** Cap injected PDF text so very large files do not blow context limits. */
+const MAX_PDF_CONTEXT_CHARS = 120_000;
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
@@ -54,21 +58,42 @@ const upload = multer({
 
 /**
  * Read an uploaded file's content as a UTF-8 string for LLM context.
- * Images are returned as a base64 data URI instead.
- * PDFs: returns a placeholder — integrate pdf-parse if you want full text extraction.
+ * Images: short placeholder (no vision pipeline here).
+ * PDFs: text layer via pdf-parse (v2 PDFParse API); scanned/image-only PDFs often yield no text.
  */
-function readFileForContext(filePath, mimetype) {
+async function readFileForContext(filePath, mimetype) {
   if (mimetype.startsWith("image/")) {
-    const data = fs.readFileSync(filePath);
     return `[Image attached — base64 omitted for brevity. File: ${path.basename(filePath)}]`;
   }
   if (mimetype === "application/pdf") {
-    // To enable PDF text extraction: npm install pdf-parse
-    // const pdfParse = require("pdf-parse");
-    // const buf = fs.readFileSync(filePath);
-    // const data = await pdfParse(buf);
-    // return data.text;
-    return `[PDF attached: ${path.basename(filePath)}. Install pdf-parse for full text extraction.]`;
+    const base = path.basename(filePath);
+    let parser;
+    try {
+      const buf = fs.readFileSync(filePath);
+      parser = new PDFParse({ data: buf });
+      const result = await parser.getText();
+      let text = String(result.text || "").replace(/\u0000/g, "").trim();
+      if (!text) {
+        return `[PDF: no extractable text in "${base}" — it may be scanned, image-only, or encrypted.]`;
+      }
+      if (text.length > MAX_PDF_CONTEXT_CHARS) {
+        text =
+          text.slice(0, MAX_PDF_CONTEXT_CHARS) +
+          `\n\n[...truncated after ${MAX_PDF_CONTEXT_CHARS} characters]`;
+      }
+      return text;
+    } catch (e) {
+      const msg = e && e.message ? String(e.message) : "parse error";
+      return `[PDF: could not read "${base}" (${msg}).]`;
+    } finally {
+      if (parser && typeof parser.destroy === "function") {
+        try {
+          await parser.destroy();
+        } catch (_) {
+          /* ignore */
+        }
+      }
+    }
   }
   return fs.readFileSync(filePath, "utf8");
 }
